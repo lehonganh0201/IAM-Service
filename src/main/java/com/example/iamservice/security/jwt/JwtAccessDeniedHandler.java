@@ -47,7 +47,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
         );
 
         try {
-            response.getOutputStream().write(objectMapper.writeValueAsBytes(restData));
+            response.getOutputStream().write(objectMapper.writeValueAsBytes(restData.getBody()));
             response.getOutputStream().flush();
         } catch (Exception e) {
             log.error("Failed to write access denied response", e);

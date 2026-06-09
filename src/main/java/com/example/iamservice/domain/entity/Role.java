@@ -1,5 +1,6 @@
 package com.example.iamservice.domain.entity;
 
+import com.example.iamservice.domain.entity.common.DateAuditing;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,10 +20,11 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Role {
+public class Role extends DateAuditing {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String name;
 }

@@ -62,6 +62,11 @@ public class JwtTokenProvider {
         return username;
     }
 
+    public boolean isRefreshToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get(CLAIM_TYPE, String.class).equals(TYPE_REFRESH);
+    }
+
     public boolean validateToken(String token) {
         try {
             parseClaims(token);

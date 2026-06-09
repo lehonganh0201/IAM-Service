@@ -64,13 +64,13 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private void writeResponse(HttpServletResponse response, ResponseEntity<RestData<String>> restData) throws IOException {
         try {
-            response.getOutputStream().write(objectMapper.writeValueAsBytes(restData));
+            response.getOutputStream().write(objectMapper.writeValueAsBytes(restData.getBody()));
             response.getOutputStream().flush();
         } catch (Exception e) {
             log.error("Failed to write authentication error response", e);
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             response.getOutputStream().write(objectMapper.writeValueAsBytes(
-                    VsResponseUtil.error("Internal server error", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR)
+                    VsResponseUtil.error("Internal server error", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR).getBody()
             ));
         }
     }

@@ -2,6 +2,7 @@ package com.example.iamservice.security;
 
 import com.example.iamservice.domain.entity.User;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +23,10 @@ import java.util.List;
 
 @AllArgsConstructor
 public class UserPrincipal implements UserDetails {
+    @Getter
+    private Long id;
+
+    @Getter
     private String email;
 
     private String password;
@@ -31,7 +36,7 @@ public class UserPrincipal implements UserDetails {
     public static UserPrincipal create(User user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
-        return new UserPrincipal(user.getEmail(), user.getPassword(), authorities);
+        return new UserPrincipal(user.getId(), user.getEmail(), user.getPassword(), authorities);
     }
 
     @Override

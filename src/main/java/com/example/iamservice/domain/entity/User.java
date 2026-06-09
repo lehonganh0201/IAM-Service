@@ -1,5 +1,6 @@
 package com.example.iamservice.domain.entity;
 
+import com.example.iamservice.domain.entity.common.DateAuditing;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,9 +20,9 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class User {
+public class User extends DateAuditing {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)
@@ -31,7 +32,7 @@ public class User {
 
     private String avatarUrl;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;
 }
