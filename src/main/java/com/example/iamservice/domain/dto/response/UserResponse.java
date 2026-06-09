@@ -2,6 +2,8 @@ package com.example.iamservice.domain.dto.response;
 
 import lombok.*;
 
+import java.time.LocalDate;
+
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
@@ -17,6 +19,9 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class UserResponse {
+    private String fullName;
     private String email;
     private String avatarUrl;
+    private String phoneNumber;
+    private LocalDate dateOfBirth;
 }

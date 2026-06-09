@@ -9,12 +9,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    09/06/2026 at 14:36
+ * Created on:    09/06/2026 at 17:04
  * Project:       IAMService
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
@@ -24,11 +22,7 @@ import java.time.LocalDate;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserRequest {
-    private String firstName;
-
-    private String lastName;
-
+public class AuthRequest {
     @Email
     @NotNull(message = "Email is required")
     @NotBlank(message = "Email is required")
@@ -38,8 +32,4 @@ public class UserRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
     private String password;
-
-    private String phoneNumber;
-
-    private LocalDate dateOfBirth;
 }

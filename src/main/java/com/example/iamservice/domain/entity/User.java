@@ -4,6 +4,8 @@ import com.example.iamservice.domain.entity.common.DateAuditing;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
@@ -25,14 +27,28 @@ public class User extends DateAuditing {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+
     @Column(nullable = false, unique = true)
     private String email;
 
     private String password;
+
+    private String phoneNumber;
+
+    private LocalDate dateOfBirth;
 
     private String avatarUrl;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;
+
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 }

@@ -45,7 +45,14 @@ public class UserServiceImpl implements UserService {
         user = userRepository.save(user);
         log.info("User registered successfully: {}", user.getEmail());
 
+        return buildUserResponse(user);
+    }
+
+    private static UserResponse buildUserResponse(User user) {
         return UserResponse.builder()
+                .fullName(user.getFullName())
+                .dateOfBirth(user.getDateOfBirth())
+                .phoneNumber(user.getPhoneNumber())
                 .email(user.getEmail())
                 .avatarUrl(user.getAvatarUrl())
                 .build();
@@ -67,6 +74,10 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(role)
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .dateOfBirth(request.getDateOfBirth())
+                .phoneNumber(request.getPhoneNumber())
                 .build();
     }
 }
