@@ -16,4 +16,5 @@ import com.example.iamservice.domain.dto.response.UserResponse;
 public interface UserService {
     UserResponse register(UserRequest request);
 
+    UserResponse getMe(String token);
 }

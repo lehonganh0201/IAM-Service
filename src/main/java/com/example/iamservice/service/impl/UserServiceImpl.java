@@ -6,8 +6,10 @@ import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.exception.ConflictException;
 import com.example.iamservice.exception.NotFoundException;
+import com.example.iamservice.exception.UnauthorizedException;
 import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
+import com.example.iamservice.security.jwt.JwtTokenProvider;
 import com.example.iamservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -32,6 +34,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     @Transactional
@@ -46,6 +49,43 @@ public class UserServiceImpl implements UserService {
         log.info("User registered successfully: {}", user.getEmail());
 
         return buildUserResponse(user);
+    }
+
+    @Override
+    public UserResponse getMe(String token) {
+        String email = extractEmailFromToken(token);
+
+        User user = findUserWithEmail(email);
+
+        return buildUserResponse(user);
+    }
+
+    private String extractEmailFromToken(String token) {
+        String cleanedToken = cleanToken(token);
+        if (tokenValidateAndNotRefresh(cleanedToken)) {
+            return jwtTokenProvider.extractUsername(cleanedToken);
+        }
+        throw new UnauthorizedException("Token is not valid");
+    }
+
+    private String cleanToken(String token) {
+        if (token == null || token.isEmpty()) {
+            throw new UnauthorizedException("Token is missing");
+        }
+        token = token.trim();
+        if (token.startsWith("Bearer ")) {
+            return token.substring(7);
+        }
+        return token;
+    }
+
+    private boolean tokenValidateAndNotRefresh(String token) {
+        return jwtTokenProvider.validateToken(token) && !jwtTokenProvider.isRefreshToken(token);
+    }
+
+    private User findUserWithEmail(String username) {
+        return userRepository.findByEmail(username)
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     private static UserResponse buildUserResponse(User user) {
