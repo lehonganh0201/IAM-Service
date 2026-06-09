@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
+
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
@@ -36,20 +38,28 @@ public class InitConfig {
 
             if (!userRepository.existsByEmail("admin@example.com")) {
                 User admin = User.builder()
+                        .firstName("Admin")
+                        .lastName("User")
                         .email("admin@example.com")
                         .password(passwordEncoder.encode("admin123"))
-                        .role(adminRole)
+                        .phoneNumber("0123456789")
+                        .dateOfBirth(LocalDate.of(1990, 1, 1))
                         .avatarUrl(null)
+                        .role(adminRole)
                         .build();
                 userRepository.save(admin);
             }
 
             if (!userRepository.existsByEmail("user@example.com")) {
                 User user = User.builder()
+                        .firstName("Normal")
+                        .lastName("User")
                         .email("user@example.com")
                         .password(passwordEncoder.encode("user123"))
-                        .role(userRole)
+                        .phoneNumber("0987654321")
+                        .dateOfBirth(LocalDate.of(1995, 5, 5))
                         .avatarUrl(null)
+                        .role(userRole)
                         .build();
                 userRepository.save(user);
             }
