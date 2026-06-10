@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mã OTP xác thực</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 30px; text-align: center; }
+        .content { padding: 40px 30px; line-height: 1.6; color: #333; text-align: center; }
+        .otp-code {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 20px 0;
+            border: 2px dashed #9b59b6;
+        }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; }
+        .warning { color: #e74c3c; font-size: 14px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Xác thực hai lớp</h1>
+    </div>
+    <div class="content">
+        <p>Xin chào <strong th:text="${userName}"></strong>,</p>
+        <p>Mã OTP xác thực hai lớp của bạn là:</p>
+
+        <div class="otp-code" th:text="${otpCode}"></div>
+
+        <p>Mã này sẽ hết hạn sau <strong>5 phút</strong>.</p>
+        <p class="warning">Không chia sẻ mã này với bất kỳ ai. Đây là biện pháp bảo vệ tài khoản của bạn.</p>
+    </div>
+    <div class="footer">
+        <p>© 2026 IAM Service. All rights reserved.</p>
+        <p>Đây là email tự động, vui lòng không trả lời.</p>
+    </div>
+</div>
+</body>
+</html>

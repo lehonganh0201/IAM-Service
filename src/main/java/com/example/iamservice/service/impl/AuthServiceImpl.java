@@ -1,9 +1,9 @@
 package com.example.iamservice.service.impl;
 
+import com.example.iamservice.constant.EmailTemplate;
 import com.example.iamservice.domain.dto.request.AuthRequest;
 import com.example.iamservice.domain.dto.request.ForgotPasswordRequest;
 import com.example.iamservice.domain.dto.request.ResetPasswordRequest;
-import com.example.iamservice.domain.dto.request.UserRequest;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.exception.NotFoundException;
@@ -12,6 +12,7 @@ import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.security.UserPrincipal;
 import com.example.iamservice.security.jwt.JwtTokenProvider;
 import com.example.iamservice.service.AuthService;
+import com.example.iamservice.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -46,7 +48,9 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final StringRedisTemplate redisTemplate;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
+    private static final int RESET_TOKEN_EXPIRY_MINUTES = 15;
     private static final boolean IS_REFRESH_TOKEN = true;
     private static final String RESET_PASSWORD_PREFIX = "RESET_PASSWORD_TOKEN:";
 
@@ -91,41 +95,100 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void forgotPassword(ForgotPasswordRequest request) {
-        String email = request.getEmail().trim();
+        String email = normalizeEmail(request.getEmail());
 
-        userRepository.findByEmail(email).ifPresent(user -> {
-            String resetToken = java.util.UUID.randomUUID().toString();
-
-            String redisKey = RESET_PASSWORD_PREFIX + resetToken;
-            redisTemplate.opsForValue().set(redisKey, user.getId().toString(), Duration.ofMinutes(15));
-
-            String resetLink = domainUrl + "/reset-password?token=" + resetToken;
-
-            log.info("Sending password reset link to {}: {}", email, resetLink);
-        });
+        userRepository.findByEmail(email).ifPresentOrElse(
+                user -> processPasswordResetRequest(user, email),
+                () -> logNonExistentEmailAttempt(email)
+        );
     }
 
     @Override
     public void resetPassword(ResetPasswordRequest request) {
         String token = request.getToken().trim();
-        String newPassword = request.getNewPassword();
-
         String redisKey = RESET_PASSWORD_PREFIX + token;
-        String userId = redisTemplate.opsForValue().get(redisKey);
 
-        if (userId == null) {
-            log.warn("Reset password attempt failed: token invalid or expired");
-            throw new UnauthorizedException("Link không hợp lệ hoặc đã hết hạn");
+        String userIdStr = redisTemplate.opsForValue().getAndDelete(redisKey);
+        if (userIdStr == null) {
+            log.warn("Invalid or expired reset token used: {}", token);
+            throw new UnauthorizedException("Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn");
         }
 
-        User user = findUserWithId(Long.parseLong(userId));
+        User user = findUserWithId(Long.parseLong(userIdStr));
+        updateUserPassword(user, request.getNewPassword());
+        sendPasswordChangedNotification(user);
+    }
 
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase();
+    }
+
+    private void processPasswordResetRequest(User user, String email) {
+        String resetToken = generateResetToken();
+        String redisKey = RESET_PASSWORD_PREFIX + resetToken;
+
+        redisTemplate.opsForValue().set(redisKey, user.getId().toString(),
+                Duration.ofMinutes(RESET_TOKEN_EXPIRY_MINUTES));
+
+        String resetLink = buildResetLink(resetToken);
+
+        log.info("Generated password reset link for user: {}", email);
+
+        sendPasswordResetEmail(user, resetLink);
+    }
+
+    private String generateResetToken() {
+        return java.util.UUID.randomUUID().toString();
+    }
+
+    private String buildResetLink(String resetToken) {
+        return domainUrl + "/reset-password?token=" + resetToken;
+    }
+
+    private void sendPasswordResetEmail(User user, String resetLink) {
+        try {
+            emailService.sendEmail(
+                    user.getEmail(),
+                    EmailTemplate.PASSWORD_RESET,
+                    Map.of(
+                            "userName", getDisplayName(user),
+                            "resetLink", resetLink,
+                            "expiryMinutes", RESET_TOKEN_EXPIRY_MINUTES
+                    )
+            );
+        } catch (Exception e) {
+            log.error("Failed to send password reset email to: {}", user.getEmail(), e);
+        }
+    }
+
+    private String getDisplayName(User user) {
+        return user.getFullName() != null && !user.getFullName().isBlank()
+                ? user.getFullName() : user.getEmail();
+    }
+
+    private void logNonExistentEmailAttempt(String email) {
+        log.warn("Forgot password attempt for non-existent email: {}", email);
+    }
+
+    private void updateUserPassword(User user, String newPassword) {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        log.info("Password reset successfully for user ID: {}", user.getId());
+    }
 
-        redisTemplate.delete(redisKey);
-
-        log.info("Password reset successfully for user: {}", user.getEmail());
+    private void sendPasswordChangedNotification(User user) {
+        try {
+            emailService.sendEmail(
+                    user.getEmail(),
+                    EmailTemplate.PASSWORD_CHANGED,
+                    Map.of(
+                            "userName", getDisplayName(user),
+                            "email", user.getEmail()
+                    )
+            );
+        } catch (Exception e) {
+            log.warn("Failed to send password changed notification to: {}", user.getEmail(), e);
+        }
     }
 
     private User findUserWithId(long userId) {

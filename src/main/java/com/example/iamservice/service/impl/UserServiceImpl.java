@@ -144,7 +144,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
-    private static UserResponse buildUserResponse(User user) {
+    private UserResponse buildUserResponse(User user) {
         return UserResponse.builder()
                 .fullName(user.getFullName())
                 .dateOfBirth(user.getDateOfBirth())
