@@ -4,6 +4,8 @@ import com.example.iamservice.base.RestApiV1;
 import com.example.iamservice.base.RestData;
 import com.example.iamservice.base.VsResponseUtil;
 import com.example.iamservice.domain.dto.request.AuthRequest;
+import com.example.iamservice.domain.dto.request.ForgotPasswordRequest;
+import com.example.iamservice.domain.dto.request.ResetPasswordRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.service.AuthService;
@@ -40,5 +42,17 @@ public class AuthController {
     @PostMapping("/auth/refresh")
     public ResponseEntity<RestData<AuthResponse>> refreshToken(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
         return VsResponseUtil.success(authService.refreshToken(token), "Refresh token success", OK);
+    }
+
+    @PostMapping("/auth/forgot-password")
+    public ResponseEntity<RestData<Void>> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return VsResponseUtil.success(null, "Your password will be send in your email if exists", OK);
+    }
+
+    @PostMapping("/auth/reset-password")
+    public ResponseEntity<RestData<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return VsResponseUtil.success(null, "Your password change success", OK);
     }
 }
