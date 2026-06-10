@@ -1,9 +1,13 @@
 package com.example.iamservice.service.impl;
 
+import com.example.iamservice.domain.dto.request.UpdateUserPasswordRequest;
+import com.example.iamservice.domain.dto.request.UpdateUserRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.domain.mapper.UserMapper;
+import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.ConflictException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.exception.UnauthorizedException;
@@ -11,11 +15,13 @@ import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.security.jwt.JwtTokenProvider;
 import com.example.iamservice.service.UserService;
+import com.example.iamservice.util.CloudinaryUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * ----------------------------------------------------------------------------
@@ -35,6 +41,8 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CloudinaryUtil cloudinaryUtil;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -58,6 +66,54 @@ public class UserServiceImpl implements UserService {
         User user = findUserWithEmail(email);
 
         return buildUserResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUser(String token, UpdateUserRequest request) {
+        String email = extractEmailFromToken(token);
+
+        User currentUser = findUserWithEmail(email);
+
+        userMapper.updateUser(request, currentUser);
+
+        uploadFileIfExist(currentUser, request.getAvatar());
+
+        currentUser = userRepository.save(currentUser);
+
+        return buildUserResponse(currentUser);
+    }
+
+    @Override
+    public UserResponse updateUserPassword(String token, UpdateUserPasswordRequest request) {
+        String email = extractEmailFromToken(token);
+
+        User currentUser = findUserWithEmail(email);
+
+        checkPasswordValid(request, currentUser);
+
+        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        currentUser = userRepository.save(currentUser);
+
+        return buildUserResponse(currentUser);
+    }
+
+    private void checkPasswordValid(UpdateUserPasswordRequest request, User currentUser) {
+        if (!passwordEncoder.matches(request.getOldPassword(), currentUser.getPassword())) {
+            throw new BadRequestException("Your old password not matches");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), currentUser.getPassword())) {
+            throw new BadRequestException("Your new password matches with current pass");
+        }
+    }
+
+    private void uploadFileIfExist(User currentUser, MultipartFile avatar) {
+        if (avatar != null && !avatar.isEmpty()) {
+            String avatarUrl = cloudinaryUtil.uploadFile(avatar);
+            currentUser.setAvatarUrl(avatarUrl);
+        }
     }
 
     private String extractEmailFromToken(String token) {

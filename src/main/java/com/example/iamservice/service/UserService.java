@@ -1,5 +1,7 @@
 package com.example.iamservice.service;
 
+import com.example.iamservice.domain.dto.request.UpdateUserPasswordRequest;
+import com.example.iamservice.domain.dto.request.UpdateUserRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;
 import com.example.iamservice.domain.dto.response.UserResponse;
 
@@ -17,4 +19,8 @@ public interface UserService {
     UserResponse register(UserRequest request);
 
     UserResponse getMe(String token);
+
+    UserResponse updateUser(String token, UpdateUserRequest request);
+
+    UserResponse updateUserPassword(String token, UpdateUserPasswordRequest request);
 }
