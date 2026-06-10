@@ -23,6 +23,8 @@ import com.example.iamservice.util.RandomUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,9 +40,9 @@ import java.util.Map;
  * Author: Hong Anh
  * Created on: 10/06/2026
  * Project: IAMService
- * Description: User Service Implementation - Clean Code
  * ----------------------------------------------------------------------------
  */
+
 @Service
 @RequiredArgsConstructor
 @Log4j2
@@ -79,6 +81,7 @@ public class UserServiceImpl implements UserService {
         return buildUserResponse(user);
     }
 
+    @Cacheable(value = "users", key = "#token")
     @Override
     public UserResponse getMe(String token) {
         String email = extractEmailFromToken(token);
@@ -86,6 +89,7 @@ public class UserServiceImpl implements UserService {
         return buildUserResponse(user);
     }
 
+    @CacheEvict(value = "users", key = "#token")
     @Override
     @Transactional
     public UserResponse updateUser(String token, UpdateUserRequest request) {
