@@ -50,6 +50,33 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<RestData<Object>> handleBadRequestException(BadRequestException ex) {
+        return VsResponseUtil.error(
+                ex.getMessage(),
+                null,
+                ex.getStatus()
+        );
+    }
+
+    @ExceptionHandler(UploadFileException.class)
+    public ResponseEntity<RestData<Object>> handleUploadFileException(UploadFileException ex) {
+        return VsResponseUtil.error(
+                ex.getMessage(),
+                null,
+                ex.getStatus()
+        );
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<RestData<Object>> handleTooManyRequestsException(TooManyRequestsException ex) {
+        return VsResponseUtil.error(
+                ex.getMessage(),
+                null,
+                ex.getStatus()
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<RestData<Object>> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();

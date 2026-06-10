@@ -1,5 +1,6 @@
 package com.example.iamservice.aop.aspect;
 
+import com.example.iamservice.aop.annotation.RateLimit;
 import org.aspectj.lang.annotation.Pointcut;
 
 /**
@@ -21,6 +22,11 @@ public class CommonJoinPointConfig {
     @Pointcut("execution(* com.example.iamservice.repository..*(..))")
     public void repositoryPointcut() {
         // Pointcut for all methods in repository package
+    }
+
+    @Pointcut("@annotation(rateLimit)")
+    public void rateLimitPointcut(RateLimit rateLimit) {
+
     }
 }
 
