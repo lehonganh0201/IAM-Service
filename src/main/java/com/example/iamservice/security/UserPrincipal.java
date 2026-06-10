@@ -31,12 +31,14 @@ public class UserPrincipal implements UserDetails {
 
     private String password;
 
+    private boolean emailVerified;
+
     private Collection<? extends GrantedAuthority> authorities;
 
     public static UserPrincipal create(User user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
-        return new UserPrincipal(user.getId(), user.getEmail(), user.getPassword(), authorities);
+        return new UserPrincipal(user.getId(), user.getEmail(), user.getPassword(), user.isEmailVerified(), authorities);
     }
 
     @Override
@@ -71,6 +73,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return emailVerified;
     }
 }

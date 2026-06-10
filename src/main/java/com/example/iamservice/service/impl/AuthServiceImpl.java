@@ -6,6 +6,7 @@ import com.example.iamservice.domain.dto.request.ForgotPasswordRequest;
 import com.example.iamservice.domain.dto.request.ResetPasswordRequest;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.exception.UnauthorizedException;
 import com.example.iamservice.repository.UserRepository;
@@ -13,6 +14,7 @@ import com.example.iamservice.security.UserPrincipal;
 import com.example.iamservice.security.jwt.JwtTokenProvider;
 import com.example.iamservice.service.AuthService;
 import com.example.iamservice.service.EmailService;
+import com.example.iamservice.util.RandomUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +26,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.Map;
@@ -53,6 +56,7 @@ public class AuthServiceImpl implements AuthService {
     private static final int RESET_TOKEN_EXPIRY_MINUTES = 15;
     private static final boolean IS_REFRESH_TOKEN = true;
     private static final String RESET_PASSWORD_PREFIX = "RESET_PASSWORD_TOKEN:";
+    private static final String BLACKLIST_TOKEN_PREFIX = "BLACKLIST_TOKEN:";
 
     @Value("${app.domain-url}")
     private String domainUrl;
@@ -104,6 +108,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         String token = request.getToken().trim();
         String redisKey = RESET_PASSWORD_PREFIX + token;
@@ -117,6 +122,26 @@ public class AuthServiceImpl implements AuthService {
         User user = findUserWithId(Long.parseLong(userIdStr));
         updateUserPassword(user, request.getNewPassword());
         sendPasswordChangedNotification(user);
+    }
+
+    @Override
+    public void logout(String token) {
+        String cleanedToken = cleanToken(token);
+
+        if (!jwtTokenProvider.validateToken(cleanedToken) || jwtTokenProvider.isRefreshToken(cleanedToken)) {
+            throw new BadRequestException("Token không hợp lệ hoặc là refresh token");
+        }
+
+        long expiration = jwtTokenProvider.getExpiration(cleanedToken);
+        long ttl = expiration - System.currentTimeMillis();
+
+        if (ttl > 0) {
+            String blacklistKey = BLACKLIST_TOKEN_PREFIX + cleanedToken;
+            redisTemplate.opsForValue().set(blacklistKey, "blacklisted", Duration.ofMillis(ttl));
+            log.info("Token has been blacklisted successfully for user: {}", jwtTokenProvider.extractUsername(cleanedToken));
+        } else {
+            log.warn("Token already expired, no need to blacklist");
+        }
     }
 
     private String normalizeEmail(String email) {
@@ -138,7 +163,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String generateResetToken() {
-        return java.util.UUID.randomUUID().toString();
+        return RandomUtil.randomResetToken();
     }
 
     private String buildResetLink(String resetToken) {

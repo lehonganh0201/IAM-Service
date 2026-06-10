@@ -19,11 +19,7 @@
   </div>
   <div class="content">
     <p>Xin chào <strong th:text="${userName}"></strong>,</p>
-    <p>Thông tin cá nhân của tài khoản bạn vừa được cập nhật thành công vào lúc <strong th:text="${updateTime}"></strong>.</p>
-    <p>Các thông tin đã thay đổi:</p>
-    <ul th:if="${updatedFields}">
-      <li th:each="field : ${updatedFields}" th:text="${field}"></li>
-    </ul>
+    <p>Thông tin cá nhân của tài khoản bạn vừa được cập nhật thành công vào lúc <strong th:text="${updatedAt}"></strong>.</p>
     <p>Nếu bạn không thực hiện thay đổi này, vui lòng kiểm tra ngay tài khoản của mình.</p>
   </div>
   <div class="footer">

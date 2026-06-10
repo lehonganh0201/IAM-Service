@@ -131,4 +131,8 @@ public class JwtTokenProvider {
         claims.put(AUTHORITIES_KEY, authorities);
         return claims;
     }
+
+    public long getExpiration(String token) {
+        return parseClaims(token).getExpiration().getTime();
+    }
 }

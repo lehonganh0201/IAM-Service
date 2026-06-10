@@ -6,9 +6,10 @@ import com.example.iamservice.base.VsResponseUtil;
 import com.example.iamservice.domain.dto.request.AuthRequest;
 import com.example.iamservice.domain.dto.request.ForgotPasswordRequest;
 import com.example.iamservice.domain.dto.request.ResetPasswordRequest;
-import com.example.iamservice.domain.dto.request.UserRequest;
+import com.example.iamservice.domain.dto.request.VerifyEmailRequest;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.service.AuthService;
+import com.example.iamservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -16,9 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.*;
 
 /**
  * ----------------------------------------------------------------------------
@@ -33,6 +34,7 @@ import static org.springframework.http.HttpStatus.OK;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final UserService userService;
 
     @PostMapping("/auth/login")
     public ResponseEntity<RestData<AuthResponse>> login(@RequestBody @Valid AuthRequest request) {
@@ -54,5 +56,23 @@ public class AuthController {
     public ResponseEntity<RestData<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         authService.resetPassword(request);
         return VsResponseUtil.success(null, "Your password change success", OK);
+    }
+
+    @PostMapping("/auth/logout")
+    public ResponseEntity<RestData<Void>> logout(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
+        authService.logout(token);
+        return VsResponseUtil.success(null, "Logout success", NO_CONTENT);
+    }
+
+    @PostMapping("/auth/verify-email")
+    public ResponseEntity<RestData<Void>> verifyEmail(@RequestBody VerifyEmailRequest request) {
+        userService.verifyEmail(request);
+        return VsResponseUtil.success(null, "Email was verified success", OK);
+    }
+
+    @PostMapping("/auth/resend-verification")
+    public ResponseEntity<RestData<Void>> resendVerification(@RequestParam String email) {
+        userService.resendVerificationEmail(email);
+        return VsResponseUtil.success(null, "Email verify was resend success", OK);
     }
 }

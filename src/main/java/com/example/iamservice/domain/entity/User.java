@@ -44,6 +44,8 @@ public class User extends DateAuditing {
 
     private String avatarUrl;
 
+    private boolean emailVerified = false;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;

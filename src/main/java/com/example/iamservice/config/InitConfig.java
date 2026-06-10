@@ -46,6 +46,7 @@ public class InitConfig {
                         .dateOfBirth(LocalDate.of(1990, 1, 1))
                         .avatarUrl(null)
                         .role(adminRole)
+                        .emailVerified(true)
                         .build();
                 userRepository.save(admin);
             }
@@ -60,6 +61,7 @@ public class InitConfig {
                         .dateOfBirth(LocalDate.of(1995, 5, 5))
                         .avatarUrl(null)
                         .role(userRole)
+                        .emailVerified(true)
                         .build();
                 userRepository.save(user);
             }

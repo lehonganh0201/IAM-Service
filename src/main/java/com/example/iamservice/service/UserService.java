@@ -3,6 +3,7 @@ package com.example.iamservice.service;
 import com.example.iamservice.domain.dto.request.UpdateUserPasswordRequest;
 import com.example.iamservice.domain.dto.request.UpdateUserRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;
+import com.example.iamservice.domain.dto.request.VerifyEmailRequest;
 import com.example.iamservice.domain.dto.response.UserResponse;
 
 /**
@@ -23,4 +24,8 @@ public interface UserService {
     UserResponse updateUser(String token, UpdateUserRequest request);
 
     UserResponse updateUserPassword(String token, UpdateUserPasswordRequest request);
+
+    void verifyEmail(VerifyEmailRequest request);
+
+    void resendVerificationEmail(String email);
 }
