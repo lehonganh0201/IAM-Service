@@ -2,7 +2,6 @@ package com.example.iamservice.domain.dto.response;
 
 import lombok.*;
 
-import java.io.Serializable;
 import java.time.LocalDate;
 
 /**

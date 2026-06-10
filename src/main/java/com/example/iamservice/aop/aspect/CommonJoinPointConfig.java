@@ -28,5 +28,12 @@ public class CommonJoinPointConfig {
     public void rateLimitPointcut(RateLimit rateLimit) {
 
     }
+
+    @Pointcut("execution(* com.example.iamservice.controller.AuthController.login(..)) || " +
+            "execution(* com.example.iamservice.controller.AuthController.logout(..)) || " +
+            "execution(* com.example.iamservice.controller.UserController.updateUserPassword(..)) || " +
+            "execution(* com.example.iamservice.controller.UserController.updateUser(..)) || " +
+            "execution(* com.example.iamservice.controller.UserController.getMe(..))")
+    public void userActivityLogController() {}
 }
 
