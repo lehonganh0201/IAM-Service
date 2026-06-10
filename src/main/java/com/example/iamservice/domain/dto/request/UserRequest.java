@@ -25,8 +25,12 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserRequest {
+    @NotNull(message = "First name is required")
+    @NotBlank(message = "First name is required")
     private String firstName;
 
+    @NotNull(message = "Last name is required")
+    @NotBlank(message = "Last name is required")
     private String lastName;
 
     @Email

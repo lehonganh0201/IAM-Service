@@ -6,13 +6,11 @@ import com.example.iamservice.base.VsResponseUtil;
 import com.example.iamservice.domain.dto.request.UpdateUserPasswordRequest;
 import com.example.iamservice.domain.dto.request.UpdateUserRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;
-import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

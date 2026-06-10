@@ -1,5 +1,6 @@
 package com.example.iamservice.service;
 
+import com.example.iamservice.domain.dto.request.AuthRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 
@@ -15,7 +16,7 @@ import com.example.iamservice.domain.dto.response.AuthResponse;
 
 public interface AuthService {
 
-    AuthResponse login(UserRequest request);
+    AuthResponse login(AuthRequest request);
 
     AuthResponse refreshToken(String token);
 }

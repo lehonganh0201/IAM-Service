@@ -30,11 +30,6 @@ public class UpdateUserRequest {
 
     private String lastName;
 
-    @Email
-    @NotNull(message = "Email is required")
-    @NotBlank(message = "Email is required")
-    private String email;
-
     private String phoneNumber;
 
     private LocalDate dateOfBirth;

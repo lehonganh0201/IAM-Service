@@ -1,5 +1,6 @@
 package com.example.iamservice.service.impl;
 
+import com.example.iamservice.domain.dto.request.AuthRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.domain.entity.User;
@@ -41,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
     private static final boolean IS_REFRESH_TOKEN = true;
 
     @Override
-    public AuthResponse login(UserRequest request) {
+    public AuthResponse login(AuthRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())

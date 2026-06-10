@@ -3,6 +3,7 @@ package com.example.iamservice.controller;
 import com.example.iamservice.base.RestApiV1;
 import com.example.iamservice.base.RestData;
 import com.example.iamservice.base.VsResponseUtil;
+import com.example.iamservice.domain.dto.request.AuthRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.service.AuthService;
@@ -32,7 +33,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/auth/login")
-    public ResponseEntity<RestData<AuthResponse>> login(@RequestBody @Valid UserRequest request) {
+    public ResponseEntity<RestData<AuthResponse>> login(@RequestBody @Valid AuthRequest request) {
         return VsResponseUtil.success(authService.login(request), "Login success", OK);
     }
 
