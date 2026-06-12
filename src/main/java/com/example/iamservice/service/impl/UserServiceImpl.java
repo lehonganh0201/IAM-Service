@@ -23,8 +23,6 @@ import com.example.iamservice.util.RandomUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -61,6 +59,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final EmailService emailService;
     private final StringRedisTemplate redisTemplate;
+    private final UserProfileCacheService userProfileCacheService;
 
     @Value("${app.domain-url:http://localhost:8080}")
     private String domainUrl;
@@ -81,30 +80,17 @@ public class UserServiceImpl implements UserService {
         return buildUserResponse(user);
     }
 
-    @Cacheable(value = "users", key = "#token")
     @Override
     public UserResponse getMe(String token) {
         String email = extractEmailFromToken(token);
-        User user = findUserByEmail(email);
-        return buildUserResponse(user);
+        return userProfileCacheService.getUserProfileByEmail(email);
     }
 
-    @CacheEvict(value = "users", key = "#token")
     @Override
     @Transactional
     public UserResponse updateUser(String token, UpdateUserRequest request) {
         String email = extractEmailFromToken(token);
-        User currentUser = findUserByEmail(email);
-
-        userMapper.updateUser(request, currentUser);
-        uploadAvatarIfPresent(currentUser, request.getAvatar());
-
-        currentUser = userRepository.save(currentUser);
-
-        sendProfileUpdatedNotification(currentUser);
-
-        log.info("User profile updated successfully: {}", email);
-        return buildUserResponse(currentUser);
+        return updateUserByEmail(email, request);
     }
 
     @Override
@@ -163,28 +149,26 @@ public class UserServiceImpl implements UserService {
             redisTemplate.opsForValue().set(redisKey, user.getId().toString(),
                     Duration.ofHours(VERIFICATION_EXPIRY_HOURS));
 
-            String verificationLink = domainUrl + "/verify-email?token=" + verificationToken;
+            String verificationLink = buildVerifyUrl(verificationToken);
 
             sendVerificationEmail(user, verificationLink);
             log.info("Verification email resent to: {}", email);
         });
     }
 
-    public void sendTwoFactorOtp(User user, String otpCode) {
-        try {
-            emailService.sendEmail(
-                    user.getEmail(),
-                    EmailTemplate.TWO_FACTOR_OTP,
-                    Map.of(
-                            "userName", getDisplayName(user),
-                            "otp", otpCode,
-                            "expiryMinutes", OTP_EXPIRY_MINUTES
-                    )
-            );
-            log.info("2FA OTP sent successfully to: {}", user.getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send 2FA OTP to: {}", user.getEmail(), e);
-        }
+    public UserResponse updateUserByEmail(String email, UpdateUserRequest request) {
+        User currentUser = findUserByEmail(email);
+
+        userMapper.updateUser(request, currentUser);
+        uploadAvatarIfPresent(currentUser, request.getAvatar());
+
+        currentUser = userRepository.save(currentUser);
+
+        userProfileCacheService.evictUserProfile(email);
+
+        sendProfileUpdatedNotification(currentUser);
+
+        return buildUserResponse(currentUser);
     }
 
     private void sendRegistrationConfirmationEmail(User user) {
@@ -194,9 +178,13 @@ public class UserServiceImpl implements UserService {
         redisTemplate.opsForValue().set(redisKey, user.getId().toString(),
                 Duration.ofHours(VERIFICATION_EXPIRY_HOURS));
 
-        String confirmationLink = domainUrl + "/verify-email?token=" + verificationToken;
+        String confirmationLink = buildVerifyUrl(verificationToken);
 
         sendVerificationEmail(user, confirmationLink);
+    }
+
+    private String buildVerifyUrl(String verificationToken) {
+        return domainUrl + "/verify-email?token=" + verificationToken;
     }
 
     private void sendVerificationEmail(User user, String confirmationLink) {
