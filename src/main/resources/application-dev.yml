@@ -52,3 +52,7 @@ app:
     api-secret: ${CLOUDINARY_API_SECRET}
 
   domain-url: ${APP_DOMAIN_URL}
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{correlationId}] %logger{36} - %msg%n"

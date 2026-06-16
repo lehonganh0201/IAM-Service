@@ -4,6 +4,7 @@ import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
  */
 
 @Configuration
+@Log4j2
 public class InitConfig {
 
     @Bean
@@ -66,7 +68,7 @@ public class InitConfig {
                 userRepository.save(user);
             }
 
-            System.out.println("Init data completed!");
+            log.info("Init data completed!");
         };
     }
 }
