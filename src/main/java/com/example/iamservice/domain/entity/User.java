@@ -46,9 +46,8 @@ public class User extends DateAuditing {
 
     private boolean emailVerified = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", referencedColumnName = "id")
-    private Role role;
+    @Column(name = "role_id")
+    private Long roleId;
 
     public String getFullName() {
         return firstName + " " + lastName;

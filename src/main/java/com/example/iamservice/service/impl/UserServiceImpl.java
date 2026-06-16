@@ -256,7 +256,7 @@ public class UserServiceImpl implements UserService {
         return User.builder()
                 .email(request.getEmail().trim().toLowerCase())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(role)
+                .roleId(role.getId())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .dateOfBirth(request.getDateOfBirth())

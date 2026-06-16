@@ -47,7 +47,7 @@ public class InitConfig {
                         .phoneNumber("0123456789")
                         .dateOfBirth(LocalDate.of(1990, 1, 1))
                         .avatarUrl(null)
-                        .role(adminRole)
+                        .roleId(adminRole.getId())
                         .emailVerified(true)
                         .build();
                 userRepository.save(admin);
@@ -62,7 +62,7 @@ public class InitConfig {
                         .phoneNumber("0987654321")
                         .dateOfBirth(LocalDate.of(1995, 5, 5))
                         .avatarUrl(null)
-                        .role(userRole)
+                        .roleId(userRole.getId())
                         .emailVerified(true)
                         .build();
                 userRepository.save(user);

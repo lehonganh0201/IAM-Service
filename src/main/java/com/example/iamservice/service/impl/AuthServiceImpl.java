@@ -5,10 +5,12 @@ import com.example.iamservice.domain.dto.request.AuthRequest;
 import com.example.iamservice.domain.dto.request.ForgotPasswordRequest;
 import com.example.iamservice.domain.dto.request.ResetPasswordRequest;
 import com.example.iamservice.domain.dto.response.AuthResponse;
+import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.exception.UnauthorizedException;
+import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.security.UserPrincipal;
 import com.example.iamservice.security.jwt.JwtTokenProvider;
@@ -57,6 +59,7 @@ public class AuthServiceImpl implements AuthService {
     private static final boolean IS_REFRESH_TOKEN = true;
     private static final String RESET_PASSWORD_PREFIX = "RESET_PASSWORD_TOKEN:";
     private static final String BLACKLIST_TOKEN_PREFIX = "BLACKLIST_TOKEN:";
+    private final RoleRepository roleRepository;
 
     @Value("${app.domain-url}")
     private String domainUrl;
@@ -89,12 +92,18 @@ public class AuthServiceImpl implements AuthService {
         if (jwtTokenProvider.validateToken(cleanedToken) && jwtTokenProvider.isRefreshToken(cleanedToken)) {
             String username = jwtTokenProvider.extractUsername(cleanedToken);
             User user = findUserWithEmail(username);
+            Role role = findRoleByUser(user);
 
             log.info("Token refreshed for user: {}", username);
 
-            return generateAuthResponse(UserPrincipal.create(user));
+            return generateAuthResponse(UserPrincipal.create(user, role.getName()));
         }
         throw new UnauthorizedException("Refresh token cannot access");
+    }
+
+    private Role findRoleByUser(User user) {
+        return roleRepository.findById(user.getRoleId())
+                .orElseThrow(() -> new NotFoundException("Not found role " + user.getRoleId()));
     }
 
     @Override

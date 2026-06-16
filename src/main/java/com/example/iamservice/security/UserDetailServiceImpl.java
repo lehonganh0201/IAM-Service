@@ -1,6 +1,9 @@
 package com.example.iamservice.security;
 
+import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.exception.NotFoundException;
+import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
 import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +25,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserDetailServiceImpl implements UserDetailsService {
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
     @Override
     public UserDetails loadUserByUsername(@Nonnull String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
-        return UserPrincipal.create(user);
+
+        Role role = roleRepository.findById(user.getRoleId())
+                .orElseThrow(() -> new NotFoundException("Not found role"));
+        return UserPrincipal.create(user, role.getName());
     }
 }
