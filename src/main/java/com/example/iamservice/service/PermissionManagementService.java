@@ -25,5 +25,5 @@ public interface PermissionManagementService {
 
     PermissionResponse updatePermission(Long id, UpdatePermissionRequest request);
 
-    void deletePermission(Long id);
+    void deletePermission(Long id, String reason);
 }

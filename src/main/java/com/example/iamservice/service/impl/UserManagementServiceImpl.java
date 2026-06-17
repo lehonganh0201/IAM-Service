@@ -46,6 +46,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     private final PasswordEncoder passwordEncoder;
     private final KeycloakAdminService keycloakAdminService;
     private final UserMapper userMapper;
+    private final SoftDeleteService softDeleteService;
 
     @Override
     @Transactional(readOnly = true)
@@ -181,12 +182,13 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Override
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteUser(Long id, String reason) {
         User user = getActiveUser(id);
 
-        user.setDeleted(true);
         user.setEnabled(false);
         user.setLocked(true);
+
+        softDeleteService.markDeleted(user, reason);
 
         if (isKeycloakMode() && StringUtils.hasText(user.getKeycloakUserId())) {
             keycloakAdminService.disableUser(user.getKeycloakUserId());
@@ -208,7 +210,6 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .passwordHash(encodedPassword)
                 .enabled(true)
                 .locked(false)
-                .deleted(false)
                 .roles(resolveRoles(request.getRoleCodes()))
                 .build();
 
@@ -242,7 +243,6 @@ public class UserManagementServiceImpl implements UserManagementService {
                     .passwordHash(null)
                     .enabled(true)
                     .locked(false)
-                    .deleted(false)
                     .roles(resolveRoles(request.getRoleCodes()))
                     .build();
 

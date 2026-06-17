@@ -1,6 +1,8 @@
 package com.example.iamservice.domain.entity;
 
 import com.example.iamservice.domain.entity.common.DateAuditing;
+import com.example.iamservice.domain.entity.common.SoftDeleteAuditing;
+import com.example.iamservice.domain.entity.common.UserDateAuditing;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,7 +26,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class User extends DateAuditing {
+public class User extends SoftDeleteAuditing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -48,10 +50,6 @@ public class User extends DateAuditing {
     @Column(nullable = false)
     private Boolean locked = false;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private Boolean deleted = false;
-
     private String phoneNumber;
 
     private LocalDate dateOfBirth;
@@ -70,7 +68,7 @@ public class User extends DateAuditing {
     public boolean isActive() {
         return Boolean.TRUE.equals(enabled)
                 && !Boolean.TRUE.equals(locked)
-                && !Boolean.TRUE.equals(deleted);
+                && !Boolean.TRUE.equals(getDeleted());
     }
 
     public String getDisplayName() {

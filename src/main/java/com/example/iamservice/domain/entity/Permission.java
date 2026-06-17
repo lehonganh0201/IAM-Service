@@ -1,5 +1,6 @@
 package com.example.iamservice.domain.entity;
 
+import com.example.iamservice.domain.entity.common.SoftDeleteAuditing;
 import com.example.iamservice.domain.entity.common.UserDateAuditing;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,7 +21,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Permission extends UserDateAuditing {
+public class Permission extends SoftDeleteAuditing {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,7 +35,4 @@ public class Permission extends UserDateAuditing {
 
     private String description;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private Boolean deleted = false;
 }

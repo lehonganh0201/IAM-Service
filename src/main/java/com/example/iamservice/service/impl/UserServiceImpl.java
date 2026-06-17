@@ -330,7 +330,6 @@ public class UserServiceImpl implements UserService {
                     .passwordHash(null)
                     .enabled(true)
                     .locked(false)
-                    .deleted(false)
                     .build();
 
             User savedUser = userRepository.save(user);
@@ -368,7 +367,6 @@ public class UserServiceImpl implements UserService {
                 .passwordHash(encodedPassword)
                 .enabled(true)
                 .locked(false)
-                .deleted(false)
                 .build();
 
         User savedUser = userRepository.save(user);
