@@ -20,6 +20,7 @@ public class AppProperties {
     private IdentityProvider identityProvider = new IdentityProvider();
     private Jwt jwt = new Jwt();
     private Keycloak keycloak = new Keycloak();
+    private Seed seed = new Seed();
 
     @Getter
     @Setter
@@ -33,6 +34,14 @@ public class AppProperties {
         private String secret;
         private long expirationMs;
         private long refreshExpirationMs;
+    }
+
+    @Getter
+    @Setter
+    public static class Seed {
+        private String adminUsername;
+        private String adminEmail;
+        private String adminPassword;
     }
 
     @Getter
