@@ -3,6 +3,8 @@ package com.example.iamservice.domain.dto.response;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Set;
 
 /**
  * ----------------------------------------------------------------------------
@@ -21,11 +23,17 @@ import java.time.LocalDate;
 public class UserResponse {
     private Long userId;
     private String userKeycloakId;
-    private String fullName;
     private String username;
     private String email;
+    private String fullName;
     private String avatarUrl;
     private String phoneNumber;
     private LocalDate dateOfBirth;
     private Boolean isActive;
+    private Boolean enabled;
+    private Boolean locked;
+    private Boolean deleted;
+    private Set<RoleSummaryResponse> roles;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

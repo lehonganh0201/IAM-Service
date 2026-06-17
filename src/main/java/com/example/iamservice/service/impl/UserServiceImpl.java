@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse updateUserByEmail(String email, UpdateUserRequest request) {
         User currentUser = findUserByEmail(email);
 
-        userMapper.updateUser(request, currentUser);
+        updateUser(request, currentUser);
         uploadAvatarIfPresent(currentUser, request.getAvatar());
 
         currentUser = userRepository.save(currentUser);
@@ -160,6 +160,25 @@ public class UserServiceImpl implements UserService {
         sendProfileUpdatedNotification(currentUser);
 
         return buildUserResponse(currentUser);
+    }
+
+    public void updateUser(UpdateUserRequest request, User user) {
+        if ( request == null ) {
+            return;
+        }
+
+        if ( request.getFirstName() != null ) {
+            user.setFirstName( request.getFirstName() );
+        }
+        if ( request.getLastName() != null ) {
+            user.setLastName( request.getLastName() );
+        }
+        if ( request.getPhoneNumber() != null ) {
+            user.setPhoneNumber( request.getPhoneNumber() );
+        }
+        if ( request.getDateOfBirth() != null ) {
+            user.setDateOfBirth( request.getDateOfBirth() );
+        }
     }
 
     /*private void sendRegistrationConfirmationEmail(User user) {

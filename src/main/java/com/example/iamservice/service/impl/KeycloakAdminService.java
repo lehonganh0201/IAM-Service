@@ -96,6 +96,26 @@ public class KeycloakAdminService {
         userResource(keycloakUserId).remove();
     }
 
+    public void updateUserProfile(
+            String keycloakUserId,
+            String firstName,
+            String lastName,
+            Boolean enabled
+    ) {
+        UserResource userResource = userResource(keycloakUserId);
+        UserRepresentation user = userResource.toRepresentation();
+
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+
+        if (enabled != null) {
+            user.setEnabled(enabled);
+        }
+
+        userResource.update(user);
+    }
+
+
     private void updateEnabled(String keycloakUserId, boolean enabled) {
         UserResource userResource = userResource(keycloakUserId);
         UserRepresentation user = userResource.toRepresentation();

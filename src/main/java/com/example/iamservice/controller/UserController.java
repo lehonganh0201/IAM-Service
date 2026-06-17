@@ -36,7 +36,7 @@ public class UserController {
         return VsResponseUtil.success(userService.register(request), "Register success", CREATED);
     }
 
-    @GetMapping("/users")
+    @GetMapping("/users/me")
     public ResponseEntity<RestData<UserResponse>> getMe(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
         return VsResponseUtil.success(userService.getMe(token), "Get my info success", OK);
     }
