@@ -38,6 +38,12 @@ spring:
             enable: true
     default-encoding: UTF-8
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/iam-realm}
+
 management:
   endpoints:
     web:

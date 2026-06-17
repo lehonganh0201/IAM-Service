@@ -5,6 +5,7 @@ import com.example.iamservice.base.VsResponseUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -33,45 +34,24 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void commence(HttpServletRequest request,
-                         HttpServletResponse response,
-                         AuthenticationException authException) throws IOException {
+    public void commence(@NonNull HttpServletRequest request,
+                         @NonNull HttpServletResponse response,
+                         @NonNull AuthenticationException authException) throws IOException {
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        String message = determineErrorMessage(authException);
-
         ResponseEntity<RestData<String>> restData = VsResponseUtil.error(
-                message,
+                "Please try a later when you login",
                 "Request requires authentication",
                 HttpStatus.UNAUTHORIZED
         );
 
-        writeResponse(response, restData);
-    }
-
-    private String determineErrorMessage(AuthenticationException authException) {
-        String exceptionName = authException.getClass().getSimpleName();
-
-        return switch (exceptionName) {
-            case "BadCredentialsException" -> "Invalid username or password";
-            case "UsernameNotFoundException" -> "User not found";
-            case "ExpiredJwtException", "InvalidTokenException" -> "Token is invalid or expired";
-            default -> "Authentication failed: " + authException.getMessage();
-        };
-    }
-
-    private void writeResponse(HttpServletResponse response, ResponseEntity<RestData<String>> restData) throws IOException {
         try {
             response.getOutputStream().write(objectMapper.writeValueAsBytes(restData.getBody()));
             response.getOutputStream().flush();
         } catch (Exception e) {
-            log.error("Failed to write authentication error response", e);
-            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.getOutputStream().write(objectMapper.writeValueAsBytes(
-                    VsResponseUtil.error("Internal server error", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR).getBody()
-            ));
+            log.error("Failed to authentication response", e);
         }
     }
 }
