@@ -101,7 +101,7 @@ public class UserServiceImpl implements UserService {
 
         validatePasswordChange(request, currentUser);
 
-        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        currentUser.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         currentUser = userRepository.save(currentUser);
 
         sendPasswordChangedNotification(currentUser);
@@ -123,12 +123,12 @@ public class UserServiceImpl implements UserService {
 
         User user = findUserById(Long.parseLong(userIdStr));
 
-        if (user.isEmailVerified()) {
+        if (user.getEnabled()) {
             log.info("Email already verified for user: {}", user.getEmail());
             return;
         }
 
-        user.setEmailVerified(true);
+        user.setEnabled(true);
         userRepository.save(user);
 
         log.info("Email verified successfully for user: {}", user.getEmail());
@@ -138,8 +138,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void resendVerificationEmail(String email) {
-        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
-            if (user.isEmailVerified()) {
+        userRepository.findByEmailAndDeletedFalse(email.toLowerCase().trim()).ifPresent(user -> {
+            if (user.getEnabled()) {
                 throw new BadRequestException("Email đã được xác thực trước đó");
             }
 
@@ -235,40 +235,38 @@ public class UserServiceImpl implements UserService {
     }
 
     private String getDisplayName(User user) {
-        if (user.getFullName() != null && !user.getFullName().trim().isEmpty()) {
-            return user.getFullName();
+        if (user.getDisplayName() != null && !user.getDisplayName().trim().isEmpty()) {
+            return user.getDisplayName();
         }
         return user.getEmail();
     }
 
     private void checkEmailExists(String email) {
-        if (userRepository.existsByEmail(email.trim().toLowerCase())) {
+        if (userRepository.existsByEmailAndDeletedFalse(email.trim().toLowerCase())) {
             throw new ConflictException("Email already exists");
         }
     }
 
     private Role getDefaultRole() {
-        return roleRepository.findByName(DEFAULT_ROLE)
+        return roleRepository.findByCodeAndDeletedFalse(DEFAULT_ROLE)
                 .orElseThrow(() -> new NotFoundException("Default role 'USER' not found"));
     }
 
     private User buildUser(UserRequest request, Role role) {
         return User.builder()
                 .email(request.getEmail().trim().toLowerCase())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .roleId(role.getId())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .dateOfBirth(request.getDateOfBirth())
                 .phoneNumber(request.getPhoneNumber())
-                .emailVerified(false)
                 .build();
     }
 
     private String extractEmailFromToken(String token) {
         String cleanedToken = cleanToken(token);
-        if (jwtTokenProvider.validateToken(cleanedToken) && !jwtTokenProvider.isRefreshToken(cleanedToken)) {
-            return jwtTokenProvider.extractUsername(cleanedToken);
+        if (jwtTokenProvider.validateAccessToken(cleanedToken)) {
+            return jwtTokenProvider.getUsername(cleanedToken);
         }
         throw new UnauthorizedException("Token is not valid");
     }
@@ -282,7 +280,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private User findUserByEmail(String email) {
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
@@ -293,7 +291,7 @@ public class UserServiceImpl implements UserService {
 
     private UserResponse buildUserResponse(User user) {
         return UserResponse.builder()
-                .fullName(user.getFullName())
+                .fullName(user.getDisplayName())
                 .dateOfBirth(user.getDateOfBirth())
                 .phoneNumber(user.getPhoneNumber())
                 .email(user.getEmail())
@@ -302,10 +300,10 @@ public class UserServiceImpl implements UserService {
     }
 
     private void validatePasswordChange(UpdateUserPasswordRequest request, User currentUser) {
-        if (!passwordEncoder.matches(request.getOldPassword(), currentUser.getPassword())) {
+        if (!passwordEncoder.matches(request.getOldPassword(), currentUser.getPasswordHash())) {
             throw new BadRequestException("Old password does not match");
         }
-        if (passwordEncoder.matches(request.getNewPassword(), currentUser.getPassword())) {
+        if (passwordEncoder.matches(request.getNewPassword(), currentUser.getPasswordHash())) {
             throw new BadRequestException("New password must be different from current password");
         }
     }

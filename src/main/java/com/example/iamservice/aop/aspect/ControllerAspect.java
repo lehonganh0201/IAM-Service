@@ -2,7 +2,7 @@ package com.example.iamservice.aop.aspect;
 
 import com.example.iamservice.domain.entity.UserActivityLog;
 import com.example.iamservice.repository.UserActivityLogRepository;
-import com.example.iamservice.security.UserPrincipal;
+import com.example.iamservice.security.IamPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -101,9 +101,9 @@ public class ControllerAspect {
             String email = null;
 
             if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
-                if (auth.getPrincipal() instanceof UserPrincipal userDetails) {
-                    userId = userDetails.getId();
-                    email = userDetails.getEmail();
+                if (auth.getPrincipal() instanceof IamPrincipal userDetails) {
+                    userId = userDetails.userId();
+                    email = userDetails.email();
                 }
             }
 

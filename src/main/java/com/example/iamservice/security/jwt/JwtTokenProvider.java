@@ -1,138 +1,80 @@
 package com.example.iamservice.security.jwt;
 
-import com.example.iamservice.exception.UnauthorizedException;
-import com.example.iamservice.security.UserPrincipal;
-import io.jsonwebtoken.*;
+import com.example.iamservice.config.properties.AppProperties;
+import com.example.iamservice.domain.entity.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-/**
- * ----------------------------------------------------------------------------
- * Author:        Hong Anh
- * Created on:    09/06/2026 at 13:28
- * Project:       IAMService
- * Contact:       https://github.com/lehonganh0201
- * ----------------------------------------------------------------------------
- */
 
 @Component
-@Log4j2
+@RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    private static final String CLAIM_TYPE = "type";
-    private static final String TYPE_ACCESS = "access";
-    private static final String TYPE_REFRESH = "refresh";
-//    private static final String USERNAME_KEY = "username";
-    private static final String AUTHORITIES_KEY = "auth";
+    private static final String TOKEN_TYPE_CLAIM = "typ";
+    private static final String ACCESS_TOKEN_TYPE = "access";
 
-    @Value("${app.jwt.secret}")
-    private String secretKey;
+    private final AppProperties appProperties;
 
-    @Value("${app.jwt.expiration-ms}")
-    private Integer expirationMilliseconds;
+    private SecretKey secretKey;
 
-    @Value("${app.jwt.refresh-expiration-ms}")
-    private Integer refreshExpirationMilliseconds;
+    @PostConstruct
+    void init() {
+        String secret = appProperties.getJwt().getSecret();
 
-    public String generateToken(UserPrincipal userPrincipal, boolean isRefreshToken) {
-        Map<String, Object> claims = buildClaims(userPrincipal, isRefreshToken);
-
-        Integer expirationTime = isRefreshToken ? refreshExpirationMilliseconds : expirationMilliseconds;
-
-        return buildJwtToken(claims, userPrincipal.getUsername(), expirationTime);
-    }
-
-    public String extractUsername(String token) {
-        Claims claims = parseClaims(token);
-        String username = claims.getSubject();
-
-        checkUsernameEmpty(username);
-        return username;
-    }
-
-    public boolean isRefreshToken(String token) {
-        Claims claims = parseClaims(token);
-        return claims.get(CLAIM_TYPE, String.class).equals(TYPE_REFRESH);
-    }
-
-    public boolean validateToken(String token) {
-        try {
-            parseClaims(token);
-            return true;
-        } catch (io.jsonwebtoken.security.SignatureException e) {
-            log.error("Invalid JWT signature: {}", e.getMessage());
-            throw new UnauthorizedException("Invalid JWT signature");
-        } catch (MalformedJwtException e) {
-            log.error("Invalid JWT token: {}", e.getMessage());
-            throw new UnauthorizedException("Invalid JWT token");
-        } catch (ExpiredJwtException e) {
-            log.error("Expired JWT token: {}", e.getMessage());
-            throw new UnauthorizedException("Expired JWT token");
-        } catch (UnsupportedJwtException e) {
-            log.error("Unsupported JWT token: {}", e.getMessage());
-            throw new UnauthorizedException("Unsupported JWT token");
-        } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty: {}", e.getMessage());
-            throw new UnauthorizedException("JWT claims string is empty");
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT secret must be at least 32 bytes");
         }
+
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    private Claims parseClaims(String token) {
-        if (ObjectUtils.isEmpty(token)) {
-            throw new UnauthorizedException("Token is missing");
-        }
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
+    public String generateAccessToken(User user) {
+        Instant now = Instant.now();
+        Instant expiresAt = now.plusMillis(appProperties.getJwt().getExpirationMs());
 
-    private void checkUsernameEmpty(String username) {
-        if (username == null || username.isEmpty()) {
-            log.warn("Username claim is missing in the token");
-            throw new UnauthorizedException("Invalid token: username claim is missing");
-        }
-    }
-
-    private String buildJwtToken(Map<String, Object> claims, String username, Integer expirationTime) {
         return Jwts.builder()
-                .claims(claims)
-                .subject(username)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(getSigningKey())
+                .subject(String.valueOf(user.getId()))
+                .claim("username", user.getUsername())
+                .claim("email", user.getEmail())
+                .claim(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiresAt))
+                .signWith(secretKey)
                 .compact();
     }
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    public boolean validateAccessToken(String token) {
+        Claims claims = parseClaims(token);
+        String tokenType = claims.get(TOKEN_TYPE_CLAIM, String.class);
+        return ACCESS_TOKEN_TYPE.equals(tokenType);
     }
 
-    private Map<String, Object> buildClaims(UserPrincipal userPrincipal, boolean isRefreshToken) {
-        String authorities = userPrincipal.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_TYPE, isRefreshToken ? TYPE_REFRESH : TYPE_ACCESS);
-//        claims.put(USERNAME_KEY, userPrincipal.getUsername());
-        claims.put(AUTHORITIES_KEY, authorities);
-        return claims;
+    public Long getUserId(String token) {
+        String subject = parseClaims(token).getSubject();
+        return Long.parseLong(subject);
     }
 
-    public long getExpiration(String token) {
-        return parseClaims(token).getExpiration().getTime();
+    public String getUsername(String token) {
+        return parseClaims(token).get("username", String.class);
+    }
+
+    public String getEmail(String token) {
+        return parseClaims(token).get("email", String.class);
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

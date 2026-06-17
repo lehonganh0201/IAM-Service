@@ -1,89 +1,93 @@
 package com.example.iamservice.security.jwt;
 
-import com.example.iamservice.exception.UnauthorizedException;
-import com.example.iamservice.security.UserDetailServiceImpl;
-import jakarta.annotation.Nonnull;
+import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.repository.UserRepository;
+import com.example.iamservice.security.IamPrincipal;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-
-/**
- * ----------------------------------------------------------------------------
- * Author:        Hong Anh
- * Created on:    09/06/2026 at 13:54
- * Project:       IAMService
- * Contact:       https://github.com/lehonganh0201
- * ----------------------------------------------------------------------------
- */
+import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private static final String TOKEN_PREFIX = "Bearer ";
-    private static final String BLACKLIST_TOKEN_PREFIX = "BLACKLIST_TOKEN:";
 
-    private final UserDetailServiceImpl userDetailService;
-    private final JwtTokenProvider tokenProvider;
-    private final StringRedisTemplate redisTemplate;
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(@Nonnull HttpServletRequest request,
-                                    @Nonnull HttpServletResponse response,
-                                    @Nonnull FilterChain filterChain) throws ServletException, IOException {
-        try {
-            String jwt = getJwtFromRequest(request);
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
 
-            if (isTokenBlacklisted(jwt)) {
-                filterChain.doFilter(request, response);
-                return;
-            }
+        String token = resolveToken(request);
 
-            if (jwt != null && tokenProvider.validateToken(jwt) && !tokenProvider.isRefreshToken(jwt)) {
-                authenticationRequest(request, jwt);
-            }
-        } catch (Exception ex) {
-            logger.error("Could not set user authentication in security context", ex);
+        if (StringUtils.hasText(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
+            authenticateByToken(token);
         }
+
         filterChain.doFilter(request, response);
     }
 
-    private boolean isTokenBlacklisted(String token) {
-        String blacklistKey = BLACKLIST_TOKEN_PREFIX + token;
-        return Boolean.TRUE.equals(redisTemplate.hasKey(blacklistKey));
-    }
+    private void authenticateByToken(String token) {
+        try {
+            if (!jwtTokenProvider.validateAccessToken(token)) {
+                return;
+            }
 
-    private void authenticationRequest(HttpServletRequest request, String jwt) {
-        String username = tokenProvider.extractUsername(jwt);
-        UserDetails userDetails = userDetailService.loadUserByUsername(username);
+            Long userId = jwtTokenProvider.getUserId(token);
 
-        if (userDetails != null) {
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-            authentication.setDetails(request);
+            User user = userRepository.findById(userId)
+                    .filter(u -> !Boolean.TRUE.equals(u.getDeleted()))
+                    .orElse(null);
+
+            if (user == null || !user.isActive()) {
+                return;
+            }
+
+            IamPrincipal principal = new IamPrincipal(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    "SELF"
+            );
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            principal,
+                            null,
+                            Collections.emptyList()
+                    );
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        } else {
-            logger.warn("User details not found for username: " + username);
-            throw new UnauthorizedException("User details not found for username: " + username);
-        }
 
+        } catch (Exception ignored) {
+            SecurityContextHolder.clearContext();
+        }
     }
 
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(TOKEN_PREFIX)) {
-            return bearerToken.substring(7);
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
+            return bearerToken.substring(BEARER_PREFIX.length());
         }
+
         return null;
     }
 }

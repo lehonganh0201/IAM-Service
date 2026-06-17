@@ -39,9 +39,18 @@ public class User extends DateAuditing {
     private String username;
     private String email;
     private String passwordHash;
-    private Boolean enabled;
-    private Boolean locked;
-    private Boolean deleted;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean enabled = true;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean locked = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean deleted = false;
 
     private String phoneNumber;
 
@@ -49,6 +58,7 @@ public class User extends DateAuditing {
 
     private String avatarUrl;
 
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_roles",
@@ -57,7 +67,16 @@ public class User extends DateAuditing {
     )
     private Set<Role> roles = new HashSet<>();
 
-    public String getFullName() {
-        return firstName + " " + lastName;
+    public boolean isActive() {
+        return Boolean.TRUE.equals(enabled)
+                && !Boolean.TRUE.equals(locked)
+                && !Boolean.TRUE.equals(deleted);
+    }
+
+    public String getDisplayName() {
+        String first = firstName == null ? "" : firstName;
+        String last = lastName == null ? "" : lastName;
+        String fullName = (first + " " + last).trim();
+        return fullName.isBlank() ? email : fullName;
     }
 }

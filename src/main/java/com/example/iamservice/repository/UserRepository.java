@@ -1,6 +1,7 @@
 package com.example.iamservice.repository;
 
 import com.example.iamservice.domain.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -26,4 +27,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmailAndDeletedFalse(String email);
 
     boolean existsByUsernameAndDeletedFalse(String username);
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    Optional<User> findWithRolesById(Long id);
 }

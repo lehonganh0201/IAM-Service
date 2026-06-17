@@ -38,5 +38,6 @@ public class RefreshToken extends DateAuditing {
     private Instant expiresAt;
 
     @Builder.Default
+    @Column(nullable = false)
     private boolean revoked = false;
 }
