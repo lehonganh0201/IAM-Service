@@ -19,9 +19,13 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 public class UserResponse {
+    private Long userId;
+    private String userKeycloakId;
     private String fullName;
+    private String username;
     private String email;
     private String avatarUrl;
     private String phoneNumber;
     private LocalDate dateOfBirth;
+    private Boolean isActive;
 }

@@ -2,6 +2,7 @@ package com.example.iamservice.service;
 
 import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
+import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;
 
 /**
  * ----------------------------------------------------------------------------
@@ -16,6 +17,8 @@ import com.example.iamservice.domain.dto.response.AuthResponse;
 public interface AuthService {
 
     AuthResponse login(AuthRequest request);
+
+    KeycloakLoginResponse getLoginUrl();
 
     AuthResponse refreshToken(RefreshTokenRequest token);
 
