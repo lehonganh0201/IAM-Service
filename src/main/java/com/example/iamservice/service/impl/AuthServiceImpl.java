@@ -6,6 +6,8 @@ import com.example.iamservice.constant.EmailTemplate;
 import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.domain.dto.response.IssuedRefreshToken;
+import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;
+import com.example.iamservice.domain.dto.response.KeycloakTokenResponse;
 import com.example.iamservice.domain.entity.RefreshToken;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.exception.NotFoundException;
@@ -28,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -53,6 +56,7 @@ public class AuthServiceImpl implements AuthService {
     private static final String RESET_PASSWORD_PREFIX = "RESET_PASSWORD_TOKEN:";
     private final AppProperties appProperties;
     private final RefreshTokenService refreshTokenService;
+    private final KeycloakUserService keycloakUserService;
 
     @Value("${app.domain-url}")
     private String domainUrl;
@@ -86,38 +90,42 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
-    public AuthResponse refreshToken(RefreshTokenRequest request) {
-        if (appProperties.getIdentityProvider().getType() != IdentityProviderType.SELF) {
-            throw new IllegalStateException("Self refresh is disabled in Keycloak mode. Use Keycloak refresh endpoint.");
+    public KeycloakLoginResponse getLoginUrl() {
+        if (appProperties.getIdentityProvider().getType() != IdentityProviderType.KEYCLOAK) {
+            throw new IllegalStateException("Keycloak login URL is only available in Keycloak mode");
         }
 
-        RefreshToken refreshToken = refreshTokenService.validateActiveToken(request.getRefreshToken());
+        return new KeycloakLoginResponse(
+                "Please login via Keycloak",
+                keycloakUserService.buildAuthorizationUrl()
+        );
+    }
 
-        User user = userRepository.findById(refreshToken.getUserId())
-                .filter(u -> !Boolean.TRUE.equals(u.getDeleted()))
-                .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+    @Override
+    @Transactional
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        if (appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK) {
+            KeycloakTokenResponse tokenResponse = keycloakUserService.refresh(request.getRefreshToken());
 
-        validateUserCanLogin(user);
+            return AuthResponse.builder()
+                    .accessToken(tokenResponse.accessToken())
+                    .refreshToken(tokenResponse.refreshToken())
+                    .tokenType(tokenResponse.tokenType())
+                    .refreshTokenExpiresAt(
+                            Instant.now().plusSeconds(tokenResponse.refreshExpiresIn())
+                    )
+                    .build();
+        }
 
-        refreshToken.setRevoked(true);
-
-        String accessToken = jwtTokenProvider.generateAccessToken(user);
-        IssuedRefreshToken newRefreshToken = refreshTokenService.issue(user.getId());
-
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(newRefreshToken.rawToken())
-                .tokenType("Bearer")
-                .refreshTokenExpiresAt(newRefreshToken.expiresAt())
-                .build();
+        return refreshSelfToken(request);
     }
 
     @Override
     @Transactional
     public void logout(LogoutRequest request) {
-        if (appProperties.getIdentityProvider().getType() != IdentityProviderType.SELF) {
-            throw new IllegalStateException("Self logout is disabled in Keycloak mode. Use Keycloak logout endpoint.");
+        if (appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK) {
+            keycloakUserService.logout(request.getRefreshToken());
+            return;
         }
 
         refreshTokenService.revoke(request.getRefreshToken());
@@ -240,5 +248,27 @@ public class AuthServiceImpl implements AuthService {
     private User findUserWithId(long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
+    private AuthResponse refreshSelfToken(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.validateActiveToken(request.getRefreshToken());
+
+        User user = userRepository.findById(refreshToken.getUserId())
+                .filter(u -> !Boolean.TRUE.equals(u.getDeleted()))
+                .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+
+        validateUserCanLogin(user);
+
+        refreshToken.setRevoked(true);
+
+        String accessToken = jwtTokenProvider.generateAccessToken(user);
+        IssuedRefreshToken newRefreshToken = refreshTokenService.issue(user.getId());
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(newRefreshToken.rawToken())
+                .tokenType("Bearer")
+                .refreshTokenExpiresAt(newRefreshToken.expiresAt())
+                .build();
     }
 }

@@ -6,16 +6,14 @@ import com.example.iamservice.base.RestData;
 import com.example.iamservice.base.VsResponseUtil;
 import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
+import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;
 import com.example.iamservice.service.AuthService;
 import com.example.iamservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -44,6 +42,11 @@ public class AuthController {
     @PostMapping("/auth/login")
     public ResponseEntity<RestData<AuthResponse>> login(@RequestBody @Valid AuthRequest request) {
         return VsResponseUtil.success(authService.login(request), "Login success", OK);
+    }
+
+    @GetMapping("/auth/login")
+    public ResponseEntity<RestData<KeycloakLoginResponse>> getLoginUrl() {
+        return VsResponseUtil.success(authService.getLoginUrl(), "Login success", OK);
     }
 
     @RateLimit(
