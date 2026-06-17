@@ -41,6 +41,9 @@ management:
         include: "*"
 
 app:
+  identity-provider:
+    type: ${APP_IDENTITY_PROVIDER_TYPE:SELF}
+
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS}
@@ -50,6 +53,16 @@ app:
     cloud-name: ${CLOUDINARY_CLOUD_NAME}
     api-key: ${CLOUDINARY_API_KEY}
     api-secret: ${CLOUDINARY_API_SECRET}
+
+  keycloak:
+    server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
+    realm: ${KEYCLOAK_REALM:iam-realm}
+    issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/iam-realm}
+    user-client-id: ${KEYCLOAK_USER_CLIENT_ID:iam-user-client}
+    user-client-secret: ${KEYCLOAK_USER_CLIENT_SECRET:}
+    admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:iam-admin-client}
+    admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:}
+    redirect-uri: ${KEYCLOAK_REDIRECT_URI:http://localhost:3000/callback}
 
   domain-url: ${APP_DOMAIN_URL}
 
