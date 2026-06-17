@@ -35,5 +35,6 @@ public class Permission extends UserDateAuditing {
     private String description;
 
     @Builder.Default
+    @Column(nullable = false)
     private Boolean deleted = false;
 }

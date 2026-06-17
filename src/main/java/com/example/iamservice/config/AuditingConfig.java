@@ -1,6 +1,6 @@
 package com.example.iamservice.config;
 
-import com.example.iamservice.security.UserPrincipal;
+import com.example.iamservice.security.IamPrincipal;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
@@ -35,8 +35,8 @@ public class AuditingConfig {
             if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
                 return Optional.empty();
             }
-            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-            return Optional.of(userPrincipal.getId());
+            IamPrincipal userPrincipal = (IamPrincipal) authentication.getPrincipal();
+            return Optional.of(userPrincipal.userId());
         }
     }
 }

@@ -4,10 +4,7 @@ import com.example.iamservice.aop.annotation.RateLimit;
 import com.example.iamservice.base.RestApiV1;
 import com.example.iamservice.base.RestData;
 import com.example.iamservice.base.VsResponseUtil;
-import com.example.iamservice.domain.dto.request.AuthRequest;
-import com.example.iamservice.domain.dto.request.ForgotPasswordRequest;
-import com.example.iamservice.domain.dto.request.ResetPasswordRequest;
-import com.example.iamservice.domain.dto.request.VerifyEmailRequest;
+import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.service.AuthService;
 import com.example.iamservice.service.UserService;
@@ -57,8 +54,8 @@ public class AuthController {
             strategy = "USER"
     )
     @PostMapping("/auth/refresh")
-    public ResponseEntity<RestData<AuthResponse>> refreshToken(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
-        return VsResponseUtil.success(authService.refreshToken(token), "Refresh token success", OK);
+    public ResponseEntity<RestData<AuthResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        return VsResponseUtil.success(authService.refreshToken(request), "Refresh token success", OK);
     }
 
     @RateLimit(
@@ -95,8 +92,8 @@ public class AuthController {
             strategy = "USER"
     )
     @PostMapping("/auth/logout")
-    public ResponseEntity<RestData<Void>> logout(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
-        authService.logout(token);
+    public ResponseEntity<RestData<Void>> logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(request);
         return VsResponseUtil.success(null, "Logout success", NO_CONTENT);
     }
 

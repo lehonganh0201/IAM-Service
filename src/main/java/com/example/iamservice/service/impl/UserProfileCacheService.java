@@ -26,11 +26,11 @@ public class UserProfileCacheService {
 
     @Cacheable(value = "users", key = "#email")
     public UserResponse getUserProfileByEmail(String email) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         return UserResponse.builder()
-                .fullName(user.getFullName())
+                .fullName(user.getDisplayName())
                 .dateOfBirth(user.getDateOfBirth())
                 .phoneNumber(user.getPhoneNumber())
                 .email(user.getEmail())

@@ -32,8 +32,12 @@ public class Role extends UserDateAuditing {
     private String code;
     private String name;
     private String description;
-    private Boolean deleted;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "role_permissions",
