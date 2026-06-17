@@ -2,9 +2,11 @@ package com.example.iamservice.repository;
 
 import com.example.iamservice.domain.entity.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * ----------------------------------------------------------------------------
@@ -19,4 +21,18 @@ import java.util.Optional;
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
     Optional<Permission> findByCodeAndDeletedFalse(String code);
     boolean existsByCodeAndDeletedFalse(String code);
+
+    @Query("""
+            select distinct p.code
+            from User u
+            join u.roles r
+            join r.permissions p
+            where u.id = :userId
+              and u.deleted = false
+              and u.enabled = true
+              and u.locked = false
+              and r.deleted = false
+              and p.deleted = false
+            """)
+    Set<String> findActivePermissionCodesByUserId(Long userId);
 }
