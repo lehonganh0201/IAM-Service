@@ -31,12 +31,20 @@ public class AuditingConfig {
     private static class AuditorAwareImpl implements AuditorAware<Long> {
         @Override
         public Optional<Long> getCurrentAuditor() {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+            Authentication authentication =
+                    SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || !authentication.isAuthenticated()) {
                 return Optional.empty();
             }
-            IamPrincipal userPrincipal = (IamPrincipal) authentication.getPrincipal();
-            return Optional.of(userPrincipal.userId());
+
+            Object principal = authentication.getPrincipal();
+
+            if (principal instanceof IamPrincipal iamPrincipal) {
+                return Optional.ofNullable(iamPrincipal.userId());
+            }
+
+            return Optional.empty();
         }
     }
 }

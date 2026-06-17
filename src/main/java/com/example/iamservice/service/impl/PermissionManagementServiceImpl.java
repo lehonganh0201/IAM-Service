@@ -43,6 +43,7 @@ public class PermissionManagementServiceImpl implements PermissionManagementServ
 
     private final PermissionRepository permissionRepository;
     private final PermissionMapper permissionMapper;
+    private final SoftDeleteService softDeleteService;
 
     @Override
     @Transactional(readOnly = true)
@@ -79,7 +80,6 @@ public class PermissionManagementServiceImpl implements PermissionManagementServ
                 .code(normalizedCode)
                 .name(request.getName())
                 .description(request.getDescription())
-                .deleted(false)
                 .build();
 
         Permission savedPermission = permissionRepository.save(permission);
@@ -118,14 +118,14 @@ public class PermissionManagementServiceImpl implements PermissionManagementServ
 
     @Override
     @Transactional
-    public void deletePermission(Long id) {
+    public void deletePermission(Long id, String reason) {
         Permission permission = getActivePermission(id);
 
         if (isSystemPermission(permission)) {
             throw new BadRequestException("System permission cannot be deleted");
         }
 
-        permission.setDeleted(true);
+        softDeleteService.markDeleted(permission, reason);
         permissionRepository.save(permission);
     }
 

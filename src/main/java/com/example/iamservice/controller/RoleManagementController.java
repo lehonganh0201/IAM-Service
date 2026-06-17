@@ -2,6 +2,7 @@ package com.example.iamservice.controller;
 
 import com.example.iamservice.domain.dto.request.AssignRolePermissionsRequest;
 import com.example.iamservice.domain.dto.request.CreateRoleRequest;
+import com.example.iamservice.domain.dto.request.DeleteReasonRequest;
 import com.example.iamservice.domain.dto.request.UpdateRoleRequest;
 import com.example.iamservice.domain.dto.response.RoleResponse;
 import com.example.iamservice.domain.dto.response.common.ApiResponse;
@@ -120,8 +121,13 @@ public class RoleManagementController {
 
     @PreAuthorize("hasPermission(null, 'ROLE_DELETE')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable Long id) {
-        roleManagementService.deleteRole(id);
+    public ResponseEntity<ApiResponse<Void>> deleteRole(
+            @PathVariable Long id,
+            @RequestBody(required = false) DeleteReasonRequest request
+    ) {
+        String reason = request == null ? null : request.getReason();
+
+        roleManagementService.deleteRole(id, reason);
 
         return ResponseEntity.ok(
                 responseFactory.success("Delete role successfully")

@@ -48,6 +48,7 @@ public class RoleManagementServiceImpl implements RoleManagementService {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RoleMapper roleMapper;
+    private final SoftDeleteService softDeleteService;
 
     @Override
     @Transactional(readOnly = true)
@@ -84,7 +85,6 @@ public class RoleManagementServiceImpl implements RoleManagementService {
                 .code(normalizedCode)
                 .name(request.getName())
                 .description(request.getDescription())
-                .deleted(false)
                 .permissions(resolvePermissions(request.getPermissionCodes()))
                 .build();
 
@@ -138,14 +138,14 @@ public class RoleManagementServiceImpl implements RoleManagementService {
 
     @Override
     @Transactional
-    public void deleteRole(Long id) {
+    public void deleteRole(Long id, String reason) {
         Role role = getActiveRole(id);
 
         if (isSystemRole(role)) {
             throw new ConflictException("System role cannot be deleted");
         }
 
-        role.setDeleted(true);
+        softDeleteService.markDeleted(role, reason);
         roleRepository.save(role);
     }
 

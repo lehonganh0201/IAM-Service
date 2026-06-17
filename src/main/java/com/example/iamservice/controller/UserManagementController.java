@@ -1,9 +1,6 @@
 package com.example.iamservice.controller;
 
-import com.example.iamservice.domain.dto.request.AssignUserRolesRequest;
-import com.example.iamservice.domain.dto.request.CreateUserRequest;
-import com.example.iamservice.domain.dto.request.ResetUserPasswordRequest;
-import com.example.iamservice.domain.dto.request.UpdateUserRequest;
+import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.dto.response.common.ApiResponse;
 import com.example.iamservice.domain.dto.response.common.ApiResponseFactory;
@@ -156,8 +153,13 @@ public class UserManagementController {
 
     @PreAuthorize("hasPermission(null, 'USER_DELETE')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
-        userManagementService.deleteUser(id);
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+            @PathVariable Long id,
+            @RequestBody(required = false) DeleteReasonRequest request
+    ) {
+        String reason = request == null ? null : request.getReason();
+
+        userManagementService.deleteUser(id, reason);
 
         return ResponseEntity.ok(
                 responseFactory.success("Delete user successfully")

@@ -1,6 +1,7 @@
 package com.example.iamservice.domain.entity;
 
 import com.example.iamservice.domain.entity.common.DateAuditing;
+import com.example.iamservice.domain.entity.common.SoftDeleteAuditing;
 import com.example.iamservice.domain.entity.common.UserDateAuditing;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,7 +25,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Role extends UserDateAuditing {
+public class Role extends SoftDeleteAuditing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,10 +33,6 @@ public class Role extends UserDateAuditing {
     private String code;
     private String name;
     private String description;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private Boolean deleted = false;
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)

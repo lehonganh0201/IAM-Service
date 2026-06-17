@@ -28,5 +28,5 @@ public interface RoleManagementService {
 
     RoleResponse assignPermissions(Long id, AssignRolePermissionsRequest request);
 
-    void deleteRole(Long id);
+    void deleteRole(Long id, String reason);
 }

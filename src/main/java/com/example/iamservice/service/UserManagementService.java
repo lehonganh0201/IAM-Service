@@ -35,5 +35,5 @@ public interface UserManagementService {
 
     void resetPassword(Long id, ResetUserPasswordRequest request);
 
-    void deleteUser(Long id);
+    void deleteUser(Long id, String reason);
 }

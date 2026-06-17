@@ -1,6 +1,7 @@
 package com.example.iamservice.controller;
 
 import com.example.iamservice.domain.dto.request.CreatePermissionRequest;
+import com.example.iamservice.domain.dto.request.DeleteReasonRequest;
 import com.example.iamservice.domain.dto.request.UpdatePermissionRequest;
 import com.example.iamservice.domain.dto.response.PermissionResponse;
 import com.example.iamservice.domain.dto.response.common.ApiResponse;
@@ -106,8 +107,12 @@ public class PermissionManagementController {
 
     @PreAuthorize("hasPermission(null, 'PERMISSION_DELETE')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deletePermission(@PathVariable Long id) {
-        permissionManagementService.deletePermission(id);
+    public ResponseEntity<ApiResponse<Void>> deletePermission(
+            @PathVariable Long id,
+            @RequestBody(required = false) DeleteReasonRequest request) {
+        String reason = request == null ? null : request.getReason();
+
+        permissionManagementService.deletePermission(id, reason);
 
         return ResponseEntity.ok(
                 responseFactory.success("Delete permission successfully")
