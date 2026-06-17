@@ -1,18 +1,22 @@
 package com.example.iamservice.controller;
 
-import com.example.iamservice.base.PageResponse;
 import com.example.iamservice.domain.dto.request.CreatePermissionRequest;
 import com.example.iamservice.domain.dto.request.UpdatePermissionRequest;
 import com.example.iamservice.domain.dto.response.PermissionResponse;
+import com.example.iamservice.domain.dto.response.common.ApiResponse;
+import com.example.iamservice.domain.dto.response.common.ApiResponseFactory;
+import com.example.iamservice.domain.dto.response.common.PageResponse;
+import com.example.iamservice.domain.dto.response.common.PageableFactory;
 import com.example.iamservice.service.PermissionManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 /**
  * ----------------------------------------------------------------------------
@@ -28,50 +32,85 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class PermissionManagementController {
 
+    private static final Set<String> PERMISSION_SORT_FIELDS = Set.of(
+            "id",
+            "code",
+            "name",
+            "createdAt",
+            "updatedAt"
+    );
+
     private final PermissionManagementService permissionManagementService;
+    private final ApiResponseFactory responseFactory;
+    private final PageableFactory pageableFactory;
 
     @PreAuthorize("hasPermission(null, 'PERMISSION_READ')")
     @GetMapping
-    public ResponseEntity<PageResponse<PermissionResponse>> getPermissions(
+    public ResponseEntity<ApiResponse<PageResponse<PermissionResponse>>> getPermissions(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir
     ) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = pageableFactory.create(
+                page,
+                size,
+                sortBy,
+                sortDir,
+                PERMISSION_SORT_FIELDS
+        );
 
-        return ResponseEntity.ok(permissionManagementService.getPermissions(keyword, pageable));
+        PageResponse<PermissionResponse> data =
+                permissionManagementService.getPermissions(keyword, pageable);
+
+        return ResponseEntity.ok(
+                responseFactory.success("Get permissions successfully", data)
+        );
     }
 
     @PreAuthorize("hasPermission(null, 'PERMISSION_READ')")
     @GetMapping("/{id}")
-    public ResponseEntity<PermissionResponse> getPermissionById(@PathVariable Long id) {
-        return ResponseEntity.ok(permissionManagementService.getPermissionById(id));
+    public ResponseEntity<ApiResponse<PermissionResponse>> getPermissionById(@PathVariable Long id) {
+        PermissionResponse data = permissionManagementService.getPermissionById(id);
+
+        return ResponseEntity.ok(
+                responseFactory.success("Get permission successfully", data)
+        );
     }
 
     @PreAuthorize("hasPermission(null, 'PERMISSION_CREATE')")
     @PostMapping
-    public ResponseEntity<PermissionResponse> createPermission(
+    public ResponseEntity<ApiResponse<PermissionResponse>> createPermission(
             @Valid @RequestBody CreatePermissionRequest request
     ) {
-        PermissionResponse response = permissionManagementService.createPermission(request);
+        PermissionResponse data = permissionManagementService.createPermission(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(responseFactory.success("Create permission successfully", data));
     }
 
     @PreAuthorize("hasPermission(null, 'PERMISSION_UPDATE')")
     @PutMapping("/{id}")
-    public ResponseEntity<PermissionResponse> updatePermission(
+    public ResponseEntity<ApiResponse<PermissionResponse>> updatePermission(
             @PathVariable Long id,
             @Valid @RequestBody UpdatePermissionRequest request
     ) {
-        return ResponseEntity.ok(permissionManagementService.updatePermission(id, request));
+        PermissionResponse data = permissionManagementService.updatePermission(id, request);
+
+        return ResponseEntity.ok(
+                responseFactory.success("Update permission successfully", data)
+        );
     }
 
     @PreAuthorize("hasPermission(null, 'PERMISSION_DELETE')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePermission(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deletePermission(@PathVariable Long id) {
         permissionManagementService.deletePermission(id);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                responseFactory.success("Delete permission successfully")
+        );
     }
 }

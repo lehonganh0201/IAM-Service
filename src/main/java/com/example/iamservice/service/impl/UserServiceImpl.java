@@ -9,6 +9,7 @@ import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.domain.mapper.UserMapper;
 import com.example.iamservice.exception.BadRequestException;
+import com.example.iamservice.exception.ConflictException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.exception.UnauthorizedException;
 import com.example.iamservice.repository.UserRepository;
@@ -391,11 +392,11 @@ public class UserServiceImpl implements UserService {
 
     private void validateUniqueUser(String username, String email) {
         if (userRepository.existsByUsernameAndDeletedFalse(username)) {
-            throw new IllegalArgumentException("Username already exists");
+            throw new ConflictException("Username already exists");
         }
 
         if (userRepository.existsByEmailAndDeletedFalse(email)) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new ConflictException("Email already exists");
         }
     }
 }
