@@ -3,6 +3,8 @@ package com.example.iamservice.service.impl;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.dto.response.IssuedRefreshToken;
 import com.example.iamservice.domain.entity.RefreshToken;
+import com.example.iamservice.exception.BadRequestException;
+import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.RefreshTokenRepository;
 import com.example.iamservice.security.TokenHashingService;
 import com.example.iamservice.service.RefreshTokenService;
@@ -63,12 +65,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         String tokenHash = tokenHashingService.sha256(rawToken);
 
         RefreshToken refreshToken = refreshTokenRepository.findByTokenHashAndRevokedFalse(tokenHash)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
+                .orElseThrow(() -> new NotFoundException("Invalid refresh token"));
 
         if (refreshToken.getExpiresAt().isBefore(Instant.now())) {
             refreshToken.setRevoked(true);
             refreshTokenRepository.save(refreshToken);
-            throw new IllegalArgumentException("Refresh token expired");
+            throw new BadRequestException("Refresh token expired");
         }
 
         return refreshToken;

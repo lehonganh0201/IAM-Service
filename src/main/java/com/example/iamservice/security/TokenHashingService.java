@@ -1,5 +1,6 @@
 package com.example.iamservice.security;
 
+import com.example.iamservice.exception.BadRequestException;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -21,7 +22,7 @@ public class TokenHashingService {
 
     public String sha256(String rawToken) {
         if (rawToken == null || rawToken.isBlank()) {
-            throw new IllegalArgumentException("Token must not be blank");
+            throw new BadRequestException("Token must not be blank");
         }
 
         try {
@@ -29,7 +30,7 @@ public class TokenHashingService {
             byte[] hashed = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hashed);
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 algorithm is not available", e);
+            throw new BadRequestException("SHA-256 algorithm is not available");
         }
     }
 }

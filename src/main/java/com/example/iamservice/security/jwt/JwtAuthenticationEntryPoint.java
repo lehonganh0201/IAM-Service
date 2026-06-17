@@ -1,21 +1,22 @@
 package com.example.iamservice.security.jwt;
 
-import com.example.iamservice.base.RestData;
-import com.example.iamservice.base.VsResponseUtil;
+import com.example.iamservice.domain.dto.response.common.ApiError;
+import com.example.iamservice.domain.dto.response.common.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Instant;
 
 /**
  * ----------------------------------------------------------------------------
@@ -41,17 +42,18 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        ResponseEntity<RestData<String>> restData = VsResponseUtil.error(
-                "Please try a later when you login",
-                "Request requires authentication",
-                HttpStatus.UNAUTHORIZED
+        String requestId = MDC.get("requestId");
+
+        ApiResponse<Void> body = new ApiResponse<>(
+                false,
+                "Unauthorized",
+                null,
+                ApiError.of("Authorization"),
+                Instant.now(),
+                request.getRequestURI(),
+                requestId
         );
 
-        try {
-            response.getOutputStream().write(objectMapper.writeValueAsBytes(restData.getBody()));
-            response.getOutputStream().flush();
-        } catch (Exception e) {
-            log.error("Failed to authentication response", e);
-        }
+        objectMapper.writeValue(response.getOutputStream(), body);
     }
 }

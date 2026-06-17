@@ -1,6 +1,6 @@
 package com.example.iamservice.service.impl;
 
-import com.example.iamservice.base.PageResponse;
+import com.example.iamservice.domain.dto.response.common.PageResponse;
 import com.example.iamservice.domain.dto.request.AssignRolePermissionsRequest;
 import com.example.iamservice.domain.dto.request.CreateRoleRequest;
 import com.example.iamservice.domain.dto.request.UpdateRoleRequest;
@@ -8,14 +8,17 @@ import com.example.iamservice.domain.dto.response.RoleResponse;
 import com.example.iamservice.domain.entity.Permission;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.mapper.RoleMapper;
+import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.ConflictException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.PermissionRepository;
 import com.example.iamservice.repository.RoleRepository;
+import com.example.iamservice.repository.specification.RoleSpecification;
 import com.example.iamservice.service.RoleManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -49,18 +52,11 @@ public class RoleManagementServiceImpl implements RoleManagementService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<RoleResponse> getRoles(String keyword, Pageable pageable) {
-        Page<Role> roles;
+        Specification<Role> specification = Specification
+                .where(RoleSpecification.notDeleted())
+                .and(RoleSpecification.keywordContains(keyword));
 
-        if (StringUtils.hasText(keyword)) {
-            roles = roleRepository
-                    .findByDeletedFalseAndCodeContainingIgnoreCaseOrDeletedFalseAndNameContainingIgnoreCase(
-                            keyword,
-                            keyword,
-                            pageable
-                    );
-        } else {
-            roles = roleRepository.findByDeletedFalse(pageable);
-        }
+        Page<Role> roles = roleRepository.findAll(specification, pageable);
 
         Page<RoleResponse> responsePage = roles.map(roleMapper::toResponse);
 
@@ -146,7 +142,7 @@ public class RoleManagementServiceImpl implements RoleManagementService {
         Role role = getActiveRole(id);
 
         if (isSystemRole(role)) {
-            throw new IllegalArgumentException("System role cannot be deleted");
+            throw new ConflictException("System role cannot be deleted");
         }
 
         role.setDeleted(true);
@@ -155,7 +151,7 @@ public class RoleManagementServiceImpl implements RoleManagementService {
 
     private Role getActiveRole(Long id) {
         return roleRepository.findWithPermissionsByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+                .orElseThrow(() -> new NotFoundException("Role not found"));
     }
 
     private Set<Permission> resolvePermissions(Set<String> permissionCodes) {
@@ -180,7 +176,7 @@ public class RoleManagementServiceImpl implements RoleManagementService {
 
     private String normalizeCode(String code) {
         if (code == null) {
-            throw new IllegalArgumentException("Code must not be null");
+            throw new BadRequestException("Code must not be null");
         }
 
         return code.trim().toUpperCase().replace(" ", "_");
@@ -192,7 +188,7 @@ public class RoleManagementServiceImpl implements RoleManagementService {
 
     private void validateSystemRoleCodeChange(Role role, String newCode) {
         if (isSystemRole(role) && !role.getCode().equals(newCode)) {
-            throw new IllegalArgumentException("System role code cannot be changed");
+            throw new BadRequestException("System role code cannot be changed");
         }
     }
 }

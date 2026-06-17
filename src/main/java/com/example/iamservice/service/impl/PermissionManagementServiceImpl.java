@@ -1,16 +1,21 @@
 package com.example.iamservice.service.impl;
 
-import com.example.iamservice.base.PageResponse;
+import com.example.iamservice.domain.dto.response.common.PageResponse;
 import com.example.iamservice.domain.dto.request.CreatePermissionRequest;
 import com.example.iamservice.domain.dto.request.UpdatePermissionRequest;
 import com.example.iamservice.domain.dto.response.PermissionResponse;
 import com.example.iamservice.domain.entity.Permission;
 import com.example.iamservice.domain.mapper.PermissionMapper;
+import com.example.iamservice.exception.BadRequestException;
+import com.example.iamservice.exception.ConflictException;
+import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.PermissionRepository;
+import com.example.iamservice.repository.specification.PermissionSpecification;
 import com.example.iamservice.service.PermissionManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -42,18 +47,11 @@ public class PermissionManagementServiceImpl implements PermissionManagementServ
     @Override
     @Transactional(readOnly = true)
     public PageResponse<PermissionResponse> getPermissions(String keyword, Pageable pageable) {
-        Page<Permission> permissions;
+        Specification<Permission> specification = Specification
+                .where(PermissionSpecification.notDeleted())
+                .and(PermissionSpecification.keywordContains(keyword));
 
-        if (StringUtils.hasText(keyword)) {
-            permissions = permissionRepository
-                    .findByDeletedFalseAndCodeContainingIgnoreCaseOrDeletedFalseAndNameContainingIgnoreCase(
-                            keyword,
-                            keyword,
-                            pageable
-                    );
-        } else {
-            permissions = permissionRepository.findByDeletedFalse(pageable);
-        }
+        Page<Permission> permissions = permissionRepository.findAll(specification, pageable);
 
         Page<PermissionResponse> responsePage = permissions.map(permissionMapper::toResponse);
 
@@ -74,7 +72,7 @@ public class PermissionManagementServiceImpl implements PermissionManagementServ
         String normalizedCode = normalizeCode(request.getCode());
 
         if (permissionRepository.existsByCodeAndDeletedFalse(normalizedCode)) {
-            throw new IllegalArgumentException("Permission code already exists");
+            throw new ConflictException("Permission code already exists");
         }
 
         Permission permission = Permission.builder()
@@ -99,7 +97,7 @@ public class PermissionManagementServiceImpl implements PermissionManagementServ
 
             if (!normalizedCode.equalsIgnoreCase(permission.getCode())
                     && permissionRepository.existsByCodeAndDeletedFalse(normalizedCode)) {
-                throw new IllegalArgumentException("Permission code already exists");
+                throw new ConflictException("Permission code already exists");
             }
 
             validateSystemPermissionCodeChange(permission, normalizedCode);
@@ -124,7 +122,7 @@ public class PermissionManagementServiceImpl implements PermissionManagementServ
         Permission permission = getActivePermission(id);
 
         if (isSystemPermission(permission)) {
-            throw new IllegalArgumentException("System permission cannot be deleted");
+            throw new BadRequestException("System permission cannot be deleted");
         }
 
         permission.setDeleted(true);
@@ -133,12 +131,12 @@ public class PermissionManagementServiceImpl implements PermissionManagementServ
 
     private Permission getActivePermission(Long id) {
         return permissionRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new IllegalArgumentException("Permission not found"));
+                .orElseThrow(() -> new NotFoundException("Permission not found"));
     }
 
     private String normalizeCode(String code) {
         if (code == null) {
-            throw new IllegalArgumentException("Code must not be null");
+            throw new BadRequestException("Code must not be null");
         }
 
         return code.trim().toUpperCase().replace(" ", "_");
@@ -156,7 +154,7 @@ public class PermissionManagementServiceImpl implements PermissionManagementServ
 
     private void validateSystemPermissionCodeChange(Permission permission, String newCode) {
         if (isSystemPermission(permission) && !permission.getCode().equals(newCode)) {
-            throw new IllegalArgumentException("System permission code cannot be changed");
+            throw new BadRequestException("System permission code cannot be changed");
         }
     }
 }

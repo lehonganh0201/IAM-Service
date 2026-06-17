@@ -1,6 +1,6 @@
 package com.example.iamservice.service.impl;
 
-import com.example.iamservice.base.PageResponse;
+import com.example.iamservice.domain.dto.response.common.PageResponse;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.config.properties.IdentityProviderType;
 import com.example.iamservice.domain.dto.request.*;
@@ -9,12 +9,16 @@ import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.domain.mapper.UserMapper;
+import com.example.iamservice.exception.ConflictException;
+import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
+import com.example.iamservice.repository.specification.UserSpecification;
 import com.example.iamservice.service.UserManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,13 +50,11 @@ public class UserManagementServiceImpl implements UserManagementService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<UserResponse> getUsers(String keyword, Pageable pageable) {
-        Page<User> users;
+        Specification<User> specification = Specification
+                .where(UserSpecification.notDeleted())
+                .and(UserSpecification.keywordContains(keyword));
 
-        if (StringUtils.hasText(keyword)) {
-            users = userRepository.searchActiveUsersForList(keyword, pageable);
-        } else {
-            users = userRepository.findByDeletedFalse(pageable);
-        }
+        Page<User> users = userRepository.findAll(specification, pageable);
 
         Page<UserResponse> responsePage = users.map(userMapper::toResponse);
 
@@ -139,7 +141,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         List<Role> roles = roleRepository.findByCodeInAndDeletedFalse(request.getRoleCodes());
 
         if (roles.size() != request.getRoleCodes().size()) {
-            throw new IllegalArgumentException("Some roles do not exist or have been deleted");
+            throw new ConflictException("Some roles do not exist or have been deleted");
         }
 
         user.setRoles(new HashSet<>(roles));
@@ -265,7 +267,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         List<Role> roles = roleRepository.findByCodeInAndDeletedFalse(roleCodes);
 
         if (roles.size() != roleCodes.size()) {
-            throw new IllegalArgumentException("Some roles do not exist or have been deleted");
+            throw new ConflictException("Some roles do not exist or have been deleted");
         }
 
         return new HashSet<>(roles);
@@ -280,16 +282,16 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     private User getActiveUser(Long id) {
         return userRepository.findWithRolesByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     private void validateUniqueUser(String username, String email) {
         if (userRepository.existsByUsernameAndDeletedFalse(username)) {
-            throw new IllegalArgumentException("Username already exists");
+            throw new ConflictException("Username already exists");
         }
 
         if (userRepository.existsByEmailAndDeletedFalse(email)) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new ConflictException("Email already exists");
         }
     }
 

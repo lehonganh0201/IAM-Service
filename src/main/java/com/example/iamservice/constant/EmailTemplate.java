@@ -1,5 +1,6 @@
 package com.example.iamservice.constant;
 
+import com.example.iamservice.exception.NotFoundException;
 import lombok.Getter;
 
 /**
@@ -70,6 +71,6 @@ public enum EmailTemplate {
                 return template;
             }
         }
-        throw new IllegalArgumentException("Email template not found: " + name);
+        throw new NotFoundException("Email template not found: " + name);
     }
 }
