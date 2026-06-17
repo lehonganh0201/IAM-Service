@@ -68,6 +68,11 @@ app:
     admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:}
     redirect-uri: ${KEYCLOAK_REDIRECT_URI:http://localhost:3000/callback}
 
+  seed:
+    admin-username: ${APP_ADMIN_USERNAME:admin}
+    admin-email: ${APP_ADMIN_EMAIL:admin@example.com}
+    admin-password: ${APP_ADMIN_PASSWORD:Admin@123456}
+
   domain-url: ${APP_DOMAIN_URL}
 
 logging:
