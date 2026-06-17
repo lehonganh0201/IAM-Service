@@ -7,6 +7,7 @@ import com.example.iamservice.base.VsResponseUtil;
 import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;
+import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.service.AuthService;
 import com.example.iamservice.service.UserService;
 import jakarta.validation.Valid;
@@ -31,6 +32,12 @@ import static org.springframework.http.HttpStatus.*;
 public class AuthController {
     private final AuthService authService;
     private final UserService userService;
+
+    @PostMapping("/auth/register")
+    public ResponseEntity<RestData<UserResponse>> register(@RequestBody @Valid UserRequest request) {
+        return VsResponseUtil.success(userService.register(request), "Register success", CREATED);
+    }
+
 
     @RateLimit(
             key = "login",

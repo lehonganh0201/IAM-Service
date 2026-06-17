@@ -89,7 +89,6 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
 
                         .anyRequest().authenticated()
