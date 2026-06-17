@@ -1,44 +1,39 @@
 package com.example.iamservice.domain.entity;
 
-import com.example.iamservice.domain.entity.common.DateAuditing;
 import com.example.iamservice.domain.entity.common.UserDateAuditing;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    09/06/2026 at 13:15
+ * Created on:    17/06/2026 at 10:06
  * Project:       IAMService
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
  */
 
 @Entity
-@Table(name = "roles")
+@Table(name = "permissions")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class Role extends UserDateAuditing {
+public class Permission extends UserDateAuditing {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String code;
-    private String name;
-    private String description;
-    private Boolean deleted;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "role_permissions",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id")
-    )
-    private Set<Permission> permissions = new HashSet<>();
+    @Column(nullable = false)
+    private String name;
+
+    private String description;
+
+    @Builder.Default
+    private Boolean deleted = false;
 }

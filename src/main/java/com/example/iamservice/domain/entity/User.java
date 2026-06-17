@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * ----------------------------------------------------------------------------
@@ -33,10 +35,13 @@ public class User extends DateAuditing {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false, unique = true)
+    private String keycloakUserId;
+    private String username;
     private String email;
-
-    private String password;
+    private String passwordHash;
+    private Boolean enabled;
+    private Boolean locked;
+    private Boolean deleted;
 
     private String phoneNumber;
 
@@ -44,10 +49,13 @@ public class User extends DateAuditing {
 
     private String avatarUrl;
 
-    private boolean emailVerified = false;
-
-    @Column(name = "role_id")
-    private Long roleId;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
 
     public String getFullName() {
         return firstName + " " + lastName;
