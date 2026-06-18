@@ -2,6 +2,9 @@ package com.example.iamservice.service.impl;
 
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.config.properties.IdentityProviderType;
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResourceType;
+import com.example.iamservice.constant.AuditResult;
 import com.example.iamservice.constant.EmailTemplate;
 import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
@@ -17,6 +20,7 @@ import com.example.iamservice.security.jwt.JwtTokenProvider;
 import com.example.iamservice.service.AuthService;
 import com.example.iamservice.service.EmailService;
 import com.example.iamservice.service.RefreshTokenService;
+import com.example.iamservice.util.AuditRequestInfoProvider;
 import com.example.iamservice.util.RandomUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -57,6 +61,8 @@ public class AuthServiceImpl implements AuthService {
     private final AppProperties appProperties;
     private final RefreshTokenService refreshTokenService;
     private final KeycloakUserService keycloakUserService;
+    private final AuditLogService auditLogService;
+    private final AuditRequestInfoProvider auditRequestInfoProvider;
 
     @Value("${app.domain-url}")
     private String domainUrl;
@@ -75,11 +81,27 @@ public class AuthServiceImpl implements AuthService {
         String passwordHash = user.getPasswordHash();
 
         if (passwordHash == null || !passwordEncoder.matches(request.getPassword(), passwordHash)) {
+            auditLogService.saveAuthAudit(
+                    AuditAction.AUTH_LOGIN_FAILURE,
+                    AuditResult.FAILURE,
+                    request.getUsernameOrEmail(),
+                    null,
+                    "Invalid username/email or password"
+            );
+
             throw new BadCredentialsException("Invalid username/email or password");
         }
 
         String accessToken = jwtTokenProvider.generateAccessToken(user);
         IssuedRefreshToken issuedRefreshToken = refreshTokenService.issue(user.getId());
+
+        auditLogService.saveAuthAudit(
+                AuditAction.AUTH_LOGIN_SUCCESS,
+                AuditResult.SUCCESS,
+                user.getUsername(),
+                user.getId(),
+                null
+        );
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -125,10 +147,29 @@ public class AuthServiceImpl implements AuthService {
     public void logout(LogoutRequest request) {
         if (appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK) {
             keycloakUserService.logout(request.getRefreshToken());
+
+            logoutAuthLog();
             return;
         }
 
+        logoutAuthLog();
         refreshTokenService.revoke(request.getRefreshToken());
+    }
+
+    private void logoutAuthLog() {
+        auditLogService.save(
+                AuditLogCommand.builder()
+                        .action(AuditAction.AUTH_LOGOUT)
+                        .resourceType(AuditResourceType.AUTH)
+                        .result(AuditResult.SUCCESS)
+                        .message("Logout")
+                        .httpMethod(auditRequestInfoProvider.method())
+                        .requestPath(auditRequestInfoProvider.path())
+                        .ipAddress(auditRequestInfoProvider.ipAddress())
+                        .userAgent(auditRequestInfoProvider.userAgent())
+                        .requestId(auditRequestInfoProvider.requestId())
+                        .build()
+        );
     }
 
     @Override
@@ -263,6 +304,24 @@ public class AuthServiceImpl implements AuthService {
 
         String accessToken = jwtTokenProvider.generateAccessToken(user);
         IssuedRefreshToken newRefreshToken = refreshTokenService.issue(user.getId());
+
+        auditLogService.save(
+                AuditLogCommand.builder()
+                        .actorUserId(user.getId())
+                        .actorUsername(user.getUsername())
+                        .actorEmail(user.getEmail())
+                        .identityProvider("SELF")
+                        .action(AuditAction.AUTH_REFRESH_TOKEN)
+                        .resourceType(AuditResourceType.AUTH)
+                        .result(AuditResult.SUCCESS)
+                        .message("Refresh token")
+                        .httpMethod(auditRequestInfoProvider.method())
+                        .requestPath(auditRequestInfoProvider.path())
+                        .ipAddress(auditRequestInfoProvider.ipAddress())
+                        .userAgent(auditRequestInfoProvider.userAgent())
+                        .requestId(auditRequestInfoProvider.requestId())
+                        .build()
+        );
 
         return AuthResponse.builder()
                 .accessToken(accessToken)

@@ -2,6 +2,8 @@ package com.example.iamservice.service.impl;
 
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.config.properties.IdentityProviderType;
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResult;
 import com.example.iamservice.constant.EmailTemplate;
 import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.KeycloakUserProvisioningResult;
@@ -58,6 +60,7 @@ public class UserServiceImpl implements UserService {
     private final UserProfileCacheService userProfileCacheService;
     private final AppProperties appProperties;
     private final KeycloakAdminService keycloakAdminService;
+    private final AuditLogService auditLogService;
 
     @Value("${app.domain-url:http://localhost:8080}")
     private String domainUrl;
@@ -334,6 +337,8 @@ public class UserServiceImpl implements UserService {
 
             User savedUser = userRepository.save(user);
 
+            auditLogSuccess(AuditAction.AUTH_REGISTER, savedUser.getUsername(), savedUser.getId());
+
             return mapToResponse(savedUser);
 
         } catch (Exception exception) {
@@ -371,6 +376,8 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
+        auditLogSuccess(AuditAction.AUTH_REGISTER, savedUser.getUsername(), savedUser.getId());
+
         return mapToResponse(savedUser);
     }
 
@@ -390,11 +397,33 @@ public class UserServiceImpl implements UserService {
 
     private void validateUniqueUser(String username, String email) {
         if (userRepository.existsByUsernameAndDeletedFalse(username)) {
+            auditLogFailure(AuditAction.AUTH_REGISTER, username, "Username already exists");
             throw new ConflictException("Username already exists");
         }
 
         if (userRepository.existsByEmailAndDeletedFalse(email)) {
+            auditLogFailure(AuditAction.AUTH_REGISTER, email, "Email already exists");
             throw new ConflictException("Email already exists");
         }
+    }
+
+    private void auditLogFailure(AuditAction action, String usernameOrEmail, String errorMessage) {
+        auditLogService.saveAuthAudit(
+                action,
+                AuditResult.FAILURE,
+                usernameOrEmail,
+                null,
+                errorMessage
+        );
+    }
+
+    private void auditLogSuccess(AuditAction action, String usernameOrEmail, Long userId) {
+        auditLogService.saveAuthAudit(
+                action,
+                AuditResult.SUCCESS,
+                usernameOrEmail,
+                userId,
+                null
+        );
     }
 }

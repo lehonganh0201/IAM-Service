@@ -2,8 +2,15 @@ package com.example.iamservice.security.jwt;
 
 import com.example.iamservice.base.RestData;
 import com.example.iamservice.base.VsResponseUtil;
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResourceType;
+import com.example.iamservice.constant.AuditResult;
+import com.example.iamservice.domain.dto.request.AuditLogCommand;
 import com.example.iamservice.domain.dto.response.common.ApiError;
 import com.example.iamservice.domain.dto.response.common.ApiResponse;
+import com.example.iamservice.service.impl.AuditLogService;
+import com.example.iamservice.util.AuditActorProvider;
+import com.example.iamservice.util.AuditRequestInfoProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,6 +43,9 @@ import java.time.Instant;
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
     private final ObjectMapper objectMapper;
+    private final AuditLogService auditLogService;
+    private final AuditRequestInfoProvider auditRequestInfoProvider;
+    private final AuditActorProvider auditActorProvider;
 
     @Override
     public void handle(@NonNull HttpServletRequest request,
@@ -55,6 +65,27 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
                 Instant.now(),
                 request.getRequestURI(),
                 requestId
+        );
+
+        AuditActorProvider.Actor actor = auditActorProvider.currentActorOrAnonymous();
+
+        auditLogService.save(
+                AuditLogCommand.builder()
+                        .actorUserId(actor.userId())
+                        .actorUsername(actor.username())
+                        .actorEmail(actor.email())
+                        .identityProvider(actor.identityProvider())
+                        .action(AuditAction.ACCESS_DENIED)
+                        .resourceType(AuditResourceType.SECURITY)
+                        .result(AuditResult.FAILURE)
+                        .message("Access denied")
+                        .errorMessage(accessDeniedException.getMessage())
+                        .httpMethod(auditRequestInfoProvider.method())
+                        .requestPath(auditRequestInfoProvider.path())
+                        .ipAddress(auditRequestInfoProvider.ipAddress())
+                        .userAgent(auditRequestInfoProvider.userAgent())
+                        .requestId(auditRequestInfoProvider.requestId())
+                        .build()
         );
 
         objectMapper.writeValue(response.getOutputStream(), body);

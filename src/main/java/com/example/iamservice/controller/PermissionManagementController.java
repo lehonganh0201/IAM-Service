@@ -1,5 +1,8 @@
 package com.example.iamservice.controller;
 
+import com.example.iamservice.aop.annotation.AuditActivity;
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.domain.dto.request.CreatePermissionRequest;
 import com.example.iamservice.domain.dto.request.DeleteReasonRequest;
 import com.example.iamservice.domain.dto.request.UpdatePermissionRequest;
@@ -80,6 +83,11 @@ public class PermissionManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.PERMISSION_CREATE,
+            resourceType = AuditResourceType.PERMISSION,
+            message = "Create permission"
+    )
     @PreAuthorize("hasPermission(null, 'PERMISSION_CREATE')")
     @PostMapping
     public ResponseEntity<ApiResponse<PermissionResponse>> createPermission(
@@ -92,6 +100,12 @@ public class PermissionManagementController {
                 .body(responseFactory.success("Create permission successfully", data));
     }
 
+    @AuditActivity(
+            action = AuditAction.PERMISSION_UPDATE,
+            resourceType = AuditResourceType.PERMISSION,
+            resourceIdParam = "id",
+            message = "Update permission"
+    )
     @PreAuthorize("hasPermission(null, 'PERMISSION_UPDATE')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<PermissionResponse>> updatePermission(
@@ -105,6 +119,12 @@ public class PermissionManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.PERMISSION_DELETE,
+            resourceType = AuditResourceType.PERMISSION,
+            resourceIdParam = "id",
+            message = "Delete permission"
+    )
     @PreAuthorize("hasPermission(null, 'PERMISSION_DELETE')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deletePermission(
