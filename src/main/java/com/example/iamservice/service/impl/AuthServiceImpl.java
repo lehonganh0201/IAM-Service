@@ -13,6 +13,7 @@ import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;
 import com.example.iamservice.domain.dto.response.KeycloakTokenResponse;
 import com.example.iamservice.domain.entity.RefreshToken;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.exception.UnauthorizedException;
 import com.example.iamservice.repository.UserRepository;
@@ -154,6 +155,29 @@ public class AuthServiceImpl implements AuthService {
 
         logoutAuthLog();
         refreshTokenService.revoke(request.getRefreshToken());
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse exchangeKeycloakCode(
+            KeycloakCodeExchangeRequest request
+    ) {
+        if (!(appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK)) {
+            throw new BadRequestException("Keycloak mode is not enabled");
+        }
+
+        KeycloakTokenResponse tokenResponse = keycloakUserService.exchangeCode(
+                request.getCode(),
+                request.getRedirectUri(),
+                request.getCodeVerifier()
+        );
+
+        return AuthResponse.builder()
+                .accessToken(tokenResponse.accessToken())
+                .refreshToken(tokenResponse.refreshToken())
+                .tokenType(tokenResponse.tokenType())
+                .refreshTokenExpiresAt(Instant.now().plusSeconds(tokenResponse.refreshExpiresIn()))
+                .build();
     }
 
     private void logoutAuthLog() {

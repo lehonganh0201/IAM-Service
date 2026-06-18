@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -80,6 +81,36 @@ public class KeycloakUserService {
                 .body(form)
                 .retrieve()
                 .toBodilessEntity();
+    }
+
+    public KeycloakTokenResponse exchangeCode(
+            String code,
+            String redirectUri,
+            String codeVerifier
+    ) {
+        AppProperties.Keycloak keycloak = appProperties.getKeycloak();
+
+        LinkedMultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+
+        form.add("grant_type", "authorization_code");
+        form.add("client_id", keycloak.getUserClientId());
+        form.add("code", code);
+        form.add("redirect_uri", redirectUri);
+
+        if (StringUtils.hasText(keycloak.getUserClientSecret())) {
+            form.add("client_secret", keycloak.getUserClientSecret());
+        }
+
+        if (StringUtils.hasText(codeVerifier)) {
+            form.add("code_verifier", codeVerifier);
+        }
+
+        return restClient.post()
+                .uri(tokenEndpoint())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(form)
+                .retrieve()
+                .body(KeycloakTokenResponse.class);
     }
 
     private String tokenEndpoint() {
