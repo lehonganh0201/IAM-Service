@@ -18,7 +18,7 @@ public interface AuthService {
 
     AuthResponse login(AuthRequest request);
 
-    KeycloakLoginResponse getLoginUrl();
+    KeycloakLoginResponse getLoginUrl(String provider);
 
     AuthResponse refreshToken(RefreshTokenRequest token);
 

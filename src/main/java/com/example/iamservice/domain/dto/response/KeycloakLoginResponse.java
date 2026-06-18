@@ -12,6 +12,7 @@ package com.example.iamservice.domain.dto.response;
 
 public record KeycloakLoginResponse(
         String message,
-        String loginUrl
+        String loginUrl,
+        String provider
 ) {
 }

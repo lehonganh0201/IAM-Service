@@ -71,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse login(AuthRequest request) {
-        if (appProperties.getIdentityProvider().getType() != IdentityProviderType.SELF) {
+        if (isKeycloakMode()) {
             throw new IllegalStateException("Password login is disabled in Keycloak mode. Use Keycloak login URL.");
         }
 
@@ -113,21 +113,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public KeycloakLoginResponse getLoginUrl() {
-        if (appProperties.getIdentityProvider().getType() != IdentityProviderType.KEYCLOAK) {
+    public KeycloakLoginResponse getLoginUrl(String provider) {
+        if (!isKeycloakMode()) {
             throw new IllegalStateException("Keycloak login URL is only available in Keycloak mode");
         }
 
         return new KeycloakLoginResponse(
                 "Please login via Keycloak",
-                keycloakUserService.buildAuthorizationUrl()
+                keycloakUserService.buildAuthorizationUrl(provider),
+                provider
         );
     }
 
     @Override
     @Transactional
     public AuthResponse refreshToken(RefreshTokenRequest request) {
-        if (appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK) {
+        if (isKeycloakMode()) {
             KeycloakTokenResponse tokenResponse = keycloakUserService.refresh(request.getRefreshToken());
 
             return AuthResponse.builder()
@@ -146,7 +147,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void logout(LogoutRequest request) {
-        if (appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK) {
+        if (isKeycloakMode()) {
             keycloakUserService.logout(request.getRefreshToken());
 
             logoutAuthLog();
@@ -157,12 +158,16 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenService.revoke(request.getRefreshToken());
     }
 
+    private boolean isKeycloakMode() {
+        return appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK;
+    }
+
     @Override
     @Transactional
     public AuthResponse exchangeKeycloakCode(
             KeycloakCodeExchangeRequest request
     ) {
-        if (!(appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK)) {
+        if (!isKeycloakMode()) {
             throw new BadRequestException("Keycloak mode is not enabled");
         }
 
