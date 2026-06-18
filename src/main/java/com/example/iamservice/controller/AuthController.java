@@ -12,7 +12,6 @@ import com.example.iamservice.service.AuthService;
 import com.example.iamservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,8 +51,8 @@ public class AuthController {
     }
 
     @GetMapping("/auth/login")
-    public ResponseEntity<RestData<KeycloakLoginResponse>> getLoginUrl() {
-        return VsResponseUtil.success(authService.getLoginUrl(), "Login success", OK);
+    public ResponseEntity<RestData<KeycloakLoginResponse>> getLoginUrl(@RequestParam(name = "provider", required = false) String provider) {
+        return VsResponseUtil.success(authService.getLoginUrl(provider), "Login success", OK);
     }
 
     @RateLimit(

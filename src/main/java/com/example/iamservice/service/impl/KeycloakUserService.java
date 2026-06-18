@@ -29,16 +29,30 @@ public class KeycloakUserService {
     private final AppProperties appProperties;
     private final RestClient restClient = RestClient.create();
 
-    public String buildAuthorizationUrl() {
+    public String buildAuthorizationUrl(String provider) {
         AppProperties.Keycloak keycloak = appProperties.getKeycloak();
 
-        return UriComponentsBuilder
+        UriComponentsBuilder builder = UriComponentsBuilder
                 .fromUri(URI.create(keycloak.getServerUrl()))
-                .pathSegment("realms", keycloak.getRealm(), "protocol", "openid-connect", "auth")
+                .pathSegment(
+                        "realms",
+                        keycloak.getRealm(),
+                        "protocol",
+                        "openid-connect",
+                        "auth"
+                )
                 .queryParam("client_id", keycloak.getUserClientId())
                 .queryParam("response_type", "code")
                 .queryParam("scope", "openid profile email")
-                .queryParam("redirect_uri", keycloak.getRedirectUri())
+                .queryParam("redirect_uri", keycloak.getRedirectUri());
+
+        if (provider != null && !provider.isBlank()) {
+            if ("google".equals(provider)) {
+                builder.queryParam("kc_idp_hint", provider);
+            }
+        }
+
+        return builder
                 .encode(StandardCharsets.UTF_8)
                 .build()
                 .toUriString();
