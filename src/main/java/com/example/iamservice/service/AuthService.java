@@ -27,4 +27,6 @@ public interface AuthService {
     void resetPassword(ResetPasswordRequest request);
 
     void logout(LogoutRequest token);
+
+    AuthResponse exchangeKeycloakCode(KeycloakCodeExchangeRequest request);
 }

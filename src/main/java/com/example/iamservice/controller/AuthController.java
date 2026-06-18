@@ -132,4 +132,11 @@ public class AuthController {
         userService.resendVerificationEmail(email);
         return VsResponseUtil.success(null, "Email verify was resend success", OK);
     }
+
+    @PostMapping("/auth/exchange")
+    public ResponseEntity<RestData<AuthResponse>> exchangeKeycloakCode(
+            @Valid @RequestBody KeycloakCodeExchangeRequest request
+    ) {
+        return VsResponseUtil.success(authService.exchangeKeycloakCode(request), "Exchange keycloak code success", OK);
+    }
 }
