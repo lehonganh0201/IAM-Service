@@ -23,7 +23,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthRequest {
-    @Email
     @NotNull(message = "Email is required")
     @NotBlank(message = "Email is required")
     private String usernameOrEmail;

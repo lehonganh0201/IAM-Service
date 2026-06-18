@@ -13,7 +13,7 @@ import lombok.*;
  * ----------------------------------------------------------------------------
  */
 
-@Entity
+//@Entity
 @Table(name = "user_activity_logs")
 @Getter
 @Setter

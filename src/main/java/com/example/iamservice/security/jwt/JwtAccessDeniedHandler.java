@@ -1,7 +1,5 @@
 package com.example.iamservice.security.jwt;
 
-import com.example.iamservice.base.RestData;
-import com.example.iamservice.base.VsResponseUtil;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.constant.AuditResult;
@@ -20,7 +18,6 @@ import lombok.extern.log4j.Log4j2;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
