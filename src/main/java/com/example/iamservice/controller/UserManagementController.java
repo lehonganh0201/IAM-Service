@@ -1,5 +1,8 @@
 package com.example.iamservice.controller;
 
+import com.example.iamservice.aop.annotation.AuditActivity;
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.dto.response.common.ApiResponse;
@@ -80,6 +83,11 @@ public class UserManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.USER_CREATE,
+            resourceType = AuditResourceType.USER,
+            message = "Create user"
+    )
     @PreAuthorize("hasPermission(null, 'USER_CREATE')")
     @PostMapping
     public ResponseEntity<ApiResponse<UserResponse>> createUser(
@@ -92,6 +100,12 @@ public class UserManagementController {
                 .body(responseFactory.success("Create user successfully", data));
     }
 
+    @AuditActivity(
+            action = AuditAction.USER_UPDATE,
+            resourceType = AuditResourceType.USER,
+            resourceIdParam = "id",
+            message = "Update user"
+    )
     @PreAuthorize("hasPermission(null, 'USER_UPDATE')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
@@ -105,6 +119,12 @@ public class UserManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.USER_LOCK,
+            resourceType = AuditResourceType.USER,
+            resourceIdParam = "id",
+            message = "Lock user"
+    )
     @PreAuthorize("hasPermission(null, 'USER_LOCK')")
     @PatchMapping("/{id}/lock")
     public ResponseEntity<ApiResponse<UserResponse>> lockUser(@PathVariable Long id) {
@@ -115,6 +135,12 @@ public class UserManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.USER_UNLOCK,
+            resourceType = AuditResourceType.USER,
+            resourceIdParam = "id",
+            message = "Unlock user"
+    )
     @PreAuthorize("hasPermission(null, 'USER_UNLOCK')")
     @PatchMapping("/{id}/unlock")
     public ResponseEntity<ApiResponse<UserResponse>> unlockUser(@PathVariable Long id) {
@@ -125,6 +151,12 @@ public class UserManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.USER_ASSIGN_ROLE,
+            resourceType = AuditResourceType.USER,
+            resourceIdParam = "id",
+            message = "Assign roles to user"
+    )
     @PreAuthorize("hasPermission(null, 'USER_ASSIGN_ROLE')")
     @PatchMapping("/{id}/roles")
     public ResponseEntity<ApiResponse<UserResponse>> assignRoles(
@@ -138,6 +170,12 @@ public class UserManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.USER_RESET_PASSWORD,
+            resourceType = AuditResourceType.USER,
+            resourceIdParam = "id",
+            message = "Reset user password"
+    )
     @PreAuthorize("hasPermission(null, 'USER_RESET_PASSWORD')")
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
@@ -151,6 +189,12 @@ public class UserManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.USER_DELETE,
+            resourceType = AuditResourceType.USER,
+            resourceIdParam = "id",
+            message = "Delete user"
+    )
     @PreAuthorize("hasPermission(null, 'USER_DELETE')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(

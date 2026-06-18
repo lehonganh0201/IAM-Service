@@ -1,5 +1,8 @@
 package com.example.iamservice.controller;
 
+import com.example.iamservice.aop.annotation.AuditActivity;
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.domain.dto.request.AssignRolePermissionsRequest;
 import com.example.iamservice.domain.dto.request.CreateRoleRequest;
 import com.example.iamservice.domain.dto.request.DeleteReasonRequest;
@@ -81,6 +84,11 @@ public class RoleManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.ROLE_CREATE,
+            resourceType = AuditResourceType.ROLE,
+            message = "Create role"
+    )
     @PreAuthorize("hasPermission(null, 'ROLE_CREATE')")
     @PostMapping
     public ResponseEntity<ApiResponse<RoleResponse>> createRole(
@@ -93,6 +101,12 @@ public class RoleManagementController {
                 .body(responseFactory.success("Create role successfully", data));
     }
 
+    @AuditActivity(
+            action = AuditAction.ROLE_UPDATE,
+            resourceType = AuditResourceType.ROLE,
+            resourceIdParam = "id",
+            message = "Update role"
+    )
     @PreAuthorize("hasPermission(null, 'ROLE_UPDATE')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<RoleResponse>> updateRole(
@@ -106,6 +120,12 @@ public class RoleManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.ROLE_ASSIGN_PERMISSION,
+            resourceType = AuditResourceType.ROLE,
+            resourceIdParam = "id",
+            message = "Assign permissions to role"
+    )
     @PreAuthorize("hasPermission(null, 'ROLE_ASSIGN_PERMISSION')")
     @PatchMapping("/{id}/permissions")
     public ResponseEntity<ApiResponse<RoleResponse>> assignPermissions(
@@ -119,6 +139,12 @@ public class RoleManagementController {
         );
     }
 
+    @AuditActivity(
+            action = AuditAction.ROLE_DELETE,
+            resourceType = AuditResourceType.ROLE,
+            resourceIdParam = "id",
+            message = "Delete role"
+    )
     @PreAuthorize("hasPermission(null, 'ROLE_DELETE')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteRole(
