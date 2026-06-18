@@ -159,7 +159,7 @@ public class UserManagementServiceImpl implements UserManagementService {
 
         if (isKeycloakMode()) {
             if (!StringUtils.hasText(user.getKeycloakUserId())) {
-                throw new IllegalStateException("User is not linked with Keycloak");
+                throw new NotFoundException("User is not linked with Keycloak");
             }
 
             boolean temporary = Boolean.TRUE.equals(request.getTemporary());

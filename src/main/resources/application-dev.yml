@@ -53,7 +53,7 @@ management:
 
 app:
   identity-provider:
-    type: ${APP_IDENTITY_PROVIDER_TYPE:KEYCLOAK}
+    type: ${APP_IDENTITY_PROVIDER_TYPE:SELF}
 
   jwt:
     secret: ${JWT_SECRET}
@@ -84,4 +84,4 @@ app:
 
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{requestId}] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:-no-request}] [%thread] %logger{36} - %msg%n"

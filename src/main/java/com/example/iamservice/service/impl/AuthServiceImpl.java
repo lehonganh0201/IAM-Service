@@ -27,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -72,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponse login(AuthRequest request) {
         if (isKeycloakMode()) {
-            throw new IllegalStateException("Password login is disabled in Keycloak mode. Use Keycloak login URL.");
+            throw new BadRequestException("Password login is disabled in Keycloak mode. Use Keycloak login URL.");
         }
 
         User user = findLoginUser(request.getUsernameOrEmail());
@@ -90,7 +89,7 @@ public class AuthServiceImpl implements AuthService {
                     "Invalid username/email or password"
             );
 
-            throw new BadCredentialsException("Invalid username/email or password");
+            throw new UnauthorizedException("Invalid username/email or password");
         }
 
         IssuedRefreshToken issuedRefreshToken = refreshTokenService.issue(user.getId());
@@ -115,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public KeycloakLoginResponse getLoginUrl(String provider) {
         if (!isKeycloakMode()) {
-            throw new IllegalStateException("Keycloak login URL is only available in Keycloak mode");
+            throw new BadRequestException("Keycloak login URL is only available in Keycloak mode");
         }
 
         return new KeycloakLoginResponse(
@@ -273,7 +272,7 @@ public class AuthServiceImpl implements AuthService {
     private User findLoginUser(String usernameOrEmail) {
         return userRepository.findByUsernameAndDeletedFalse(usernameOrEmail)
                 .or(() -> userRepository.findByEmailAndDeletedFalse(usernameOrEmail))
-                .orElseThrow(() -> new BadCredentialsException("Invalid username/email or password"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid username/email or password"));
     }
 
     private void validateUserCanLogin(User user) {
@@ -325,7 +324,7 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findById(refreshToken.getUserId())
                 .filter(u -> !Boolean.TRUE.equals(u.getDeleted()))
-                .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid refresh token"));
 
         validateUserCanLogin(user);
 
