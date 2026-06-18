@@ -32,20 +32,4 @@ public class AuthenticationConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) {
         return authenticationConfiguration.getAuthenticationManager();
     }
-
-    @Bean
-    @ConditionalOnProperty(
-            name = "app.identity-provider.type",
-            havingValue = "SELF",
-            matchIfMissing = true
-    )
-    public AuthenticationProvider authenticationProvider(
-            UserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder
-    ) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
-
-        return provider;
-    }
 }

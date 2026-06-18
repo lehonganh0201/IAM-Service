@@ -25,7 +25,7 @@ public class DatabasePermissionEvaluator implements PermissionEvaluator {
 
     @Override
     public boolean hasPermission(@NonNull Authentication authentication,
-                                 @NonNull Object targetDomainObject,
+                                 Object targetDomainObject,
                                  @NonNull Object permission) {
         Long userId = extractUserId(authentication);
 
@@ -39,7 +39,7 @@ public class DatabasePermissionEvaluator implements PermissionEvaluator {
     @Override
     public boolean hasPermission(@NonNull Authentication authentication,
                                  @NonNull Serializable targetId,
-                                 @NonNull String targetType,
+                                 String targetType,
                                  @NonNull Object permission) {
         Long userId = extractUserId(authentication);
 

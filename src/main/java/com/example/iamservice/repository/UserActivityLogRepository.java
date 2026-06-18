@@ -13,6 +13,6 @@ import org.springframework.stereotype.Repository;
  * ----------------------------------------------------------------------------
  */
 
-@Repository
-public interface UserActivityLogRepository extends JpaRepository<UserActivityLog, Long> {
-}
+//@Repository
+//public interface UserActivityLogRepository extends JpaRepository<UserActivityLog, Long> {
+//}

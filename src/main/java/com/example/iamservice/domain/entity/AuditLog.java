@@ -5,6 +5,8 @@ import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.constant.AuditResult;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
@@ -24,6 +26,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class AuditLog {
 
     @Id
@@ -77,6 +80,7 @@ public class AuditLog {
     @Column(length = 100)
     private String requestId;
 
+    @CreatedDate
     @Column(nullable = false)
     private Instant createdAt;
 }

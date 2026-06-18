@@ -92,8 +92,8 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Invalid username/email or password");
         }
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user);
         IssuedRefreshToken issuedRefreshToken = refreshTokenService.issue(user.getId());
+        String accessToken = jwtTokenProvider.generateAccessToken(user);
 
         auditLogService.saveAuthAudit(
                 AuditAction.AUTH_LOGIN_SUCCESS,
