@@ -3,6 +3,7 @@ package com.example.iamservice.config.seed;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -50,10 +51,10 @@ public class SeedDataRunner implements CommandLineRunner {
         }
 
         Role userManagerRole = roleRepository.findByCodeAndDeletedFalse("USER_MANAGER")
-                .orElseThrow(() -> new IllegalStateException("Missing role USER_MANAGER"));
+                .orElseThrow(() -> new NotFoundException("Missing role USER_MANAGER"));
 
         Role systemAdminRole = roleRepository.findByCodeAndDeletedFalse("SYSTEM_ADMIN")
-                .orElseThrow(() -> new IllegalStateException("Missing role SYSTEM_ADMIN"));
+                .orElseThrow(() -> new NotFoundException("Missing role SYSTEM_ADMIN"));
 
         User admin = userRepository.findByUsernameAndDeletedFalse(username)
                 .or(() -> userRepository.findByEmailAndDeletedFalse(email))

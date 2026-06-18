@@ -3,6 +3,7 @@ package com.example.iamservice.service.impl;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.dto.request.KeycloakRegisterRequest;
 import com.example.iamservice.domain.dto.response.KeycloakUserProvisioningResult;
+import com.example.iamservice.exception.BadRequestException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.admin.client.Keycloak;
@@ -38,7 +39,7 @@ public class KeycloakAdminService {
             if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
                 String errorBody = response.readEntity(String.class);
 
-                throw new IllegalStateException(
+                throw new BadRequestException(
                         "Failed to create Keycloak user. status="
                                 + response.getStatus()
                                 + ", body="
@@ -137,14 +138,14 @@ public class KeycloakAdminService {
 
     private String extractCreatedUserId(URI location) {
         if (location == null) {
-            throw new IllegalStateException("Keycloak response does not contain Location header");
+            throw new BadRequestException("Keycloak response does not contain Location header");
         }
 
         String path = location.getPath();
         int lastSlashIndex = path.lastIndexOf('/');
 
         if (lastSlashIndex < 0 || lastSlashIndex == path.length() - 1) {
-            throw new IllegalStateException("Cannot extract Keycloak user id from Location: " + location);
+            throw new BadRequestException("Cannot extract Keycloak user id from Location: " + location);
         }
 
         return path.substring(lastSlashIndex + 1);

@@ -2,6 +2,7 @@ package com.example.iamservice.security.jwt;
 
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.exception.BadRequestException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -30,7 +31,7 @@ public class JwtTokenProvider {
         String secret = appProperties.getJwt().getSecret();
 
         if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
-            throw new IllegalStateException("JWT secret must be at least 32 bytes");
+            throw new BadRequestException("JWT secret must be at least 32 bytes");
         }
 
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
