@@ -6,7 +6,7 @@ import com.example.iamservice.domain.entity.RefreshToken;
 import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.RefreshTokenRepository;
-import com.example.iamservice.security.TokenHashingService;
+import com.example.iamservice.util.TokenHashingService;
 import com.example.iamservice.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;

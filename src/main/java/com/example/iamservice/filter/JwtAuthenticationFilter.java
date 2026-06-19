@@ -1,8 +1,9 @@
-package com.example.iamservice.security.jwt;
+package com.example.iamservice.filter;
 
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.security.IamPrincipal;
+import com.example.iamservice.security.jwt.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

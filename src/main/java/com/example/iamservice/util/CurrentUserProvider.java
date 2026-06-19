@@ -1,6 +1,7 @@
-package com.example.iamservice.security;
+package com.example.iamservice.util;
 
 import com.example.iamservice.exception.UnauthorizedException;
+import com.example.iamservice.security.IamPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;

@@ -1,7 +1,7 @@
 package com.example.iamservice.service.impl;
 
 import com.example.iamservice.domain.entity.common.SoftDeleteAuditing;
-import com.example.iamservice.security.CurrentUserProvider;
+import com.example.iamservice.util.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

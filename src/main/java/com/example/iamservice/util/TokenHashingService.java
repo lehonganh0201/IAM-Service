@@ -1,4 +1,4 @@
-package com.example.iamservice.security;
+package com.example.iamservice.util;
 
 import com.example.iamservice.exception.BadRequestException;
 import org.springframework.stereotype.Service;
