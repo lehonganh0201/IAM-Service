@@ -2,6 +2,7 @@ package com.example.iamservice.service.keycloak;
 
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.dto.response.KeycloakTokenResponse;
+import com.example.iamservice.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -70,12 +71,16 @@ public class KeycloakUserService {
             form.add("client_secret", keycloak.getUserClientSecret());
         }
 
-        return restClient.post()
-                .uri(tokenEndpoint())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(KeycloakTokenResponse.class);
+        try {
+            return restClient.post()
+                    .uri(tokenEndpoint())
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .body(KeycloakTokenResponse.class);
+        }catch (Exception ex) {
+            throw new BadRequestException("Cannot refresh token in provider");
+        }
     }
 
     public void logout(String refreshToken) {
@@ -89,12 +94,16 @@ public class KeycloakUserService {
             form.add("client_secret", keycloak.getUserClientSecret());
         }
 
-        restClient.post()
-                .uri(logoutEndpoint())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .toBodilessEntity();
+        try {
+            restClient.post()
+                    .uri(logoutEndpoint())
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception ex) {
+            throw new BadRequestException("Fail to logout in keycloak");
+        }
     }
 
     public KeycloakTokenResponse exchangeCode(
@@ -119,12 +128,16 @@ public class KeycloakUserService {
             form.add("code_verifier", codeVerifier);
         }
 
-        return restClient.post()
-                .uri(tokenEndpoint())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(KeycloakTokenResponse.class);
+        try {
+            return restClient.post()
+                    .uri(tokenEndpoint())
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .body(KeycloakTokenResponse.class);
+        } catch (Exception ex) {
+            throw new BadRequestException("Fail to exchange code from keycloak");
+        }
     }
 
     private String tokenEndpoint() {
