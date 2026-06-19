@@ -35,10 +35,8 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    private final KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter;
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/**",
@@ -54,7 +52,7 @@ public class SecurityConfig {
             havingValue = "SELF",
             matchIfMissing = true
     )
-    public SecurityFilterChain selfSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain selfSecurityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         return baseHttpSecurity(http)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -65,7 +63,7 @@ public class SecurityConfig {
             name = "app.identity-provider.type",
             havingValue = "KEYCLOAK"
     )
-    public SecurityFilterChain keycloakSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain keycloakSecurityFilterChain(HttpSecurity http, KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter) throws Exception {
         return baseHttpSecurity(http)
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter))
