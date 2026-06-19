@@ -68,6 +68,8 @@ public class SecurityConfig {
     public SecurityFilterChain keycloakSecurityFilterChain(HttpSecurity http) throws Exception {
         return baseHttpSecurity(http)
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter))
                 )
                 .build();

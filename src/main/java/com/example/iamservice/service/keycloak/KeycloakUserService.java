@@ -66,7 +66,7 @@ public class KeycloakUserService {
         form.add("client_id", keycloak.getUserClientId());
         form.add("refresh_token", refreshToken);
 
-        if (keycloak.getUserClientSecret() != null && !keycloak.getUserClientSecret().isBlank()) {
+        if (keycloak.getUserClientSecret() != null && !keycloak.getUserClientSecret().trim().isBlank()) {
             form.add("client_secret", keycloak.getUserClientSecret());
         }
 
@@ -85,7 +85,7 @@ public class KeycloakUserService {
         form.add("client_id", keycloak.getUserClientId());
         form.add("refresh_token", refreshToken);
 
-        if (keycloak.getUserClientSecret() != null && !keycloak.getUserClientSecret().isBlank()) {
+        if (keycloak.getUserClientSecret() != null && !keycloak.getUserClientSecret().trim().isBlank()) {
             form.add("client_secret", keycloak.getUserClientSecret());
         }
 
@@ -111,7 +111,7 @@ public class KeycloakUserService {
         form.add("code", code);
         form.add("redirect_uri", redirectUri);
 
-        if (StringUtils.hasText(keycloak.getUserClientSecret())) {
+        if (StringUtils.hasText(keycloak.getUserClientSecret().trim())) {
             form.add("client_secret", keycloak.getUserClientSecret());
         }
 
