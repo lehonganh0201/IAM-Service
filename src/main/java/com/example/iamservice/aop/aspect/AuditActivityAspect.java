@@ -3,7 +3,7 @@ package com.example.iamservice.aop.aspect;
 import com.example.iamservice.aop.annotation.AuditActivity;
 import com.example.iamservice.constant.AuditResult;
 import com.example.iamservice.domain.dto.request.AuditLogCommand;
-import com.example.iamservice.service.impl.AuditLogService;
+import com.example.iamservice.service.AuditLogService;
 import com.example.iamservice.util.AuditActorProvider;
 import com.example.iamservice.util.AuditRequestInfoProvider;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +12,6 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
-
-import java.lang.reflect.Method;
 
 /**
  * ----------------------------------------------------------------------------

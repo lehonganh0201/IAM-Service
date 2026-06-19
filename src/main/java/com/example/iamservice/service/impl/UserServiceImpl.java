@@ -9,15 +9,16 @@ import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.KeycloakUserProvisioningResult;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.User;
-import com.example.iamservice.domain.mapper.UserMapper;
 import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.ConflictException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.exception.UnauthorizedException;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.security.jwt.JwtTokenProvider;
+import com.example.iamservice.service.AuditLogService;
 import com.example.iamservice.service.EmailService;
 import com.example.iamservice.service.UserService;
+import com.example.iamservice.service.keycloak.KeycloakAdminService;
 import com.example.iamservice.util.CloudinaryUtil;
 import com.example.iamservice.util.RandomUtil;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +55,6 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final CloudinaryUtil cloudinaryUtil;
-    private final UserMapper userMapper;
     private final EmailService emailService;
     private final StringRedisTemplate redisTemplate;
     private final UserProfileCacheService userProfileCacheService;
@@ -77,22 +77,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getMe(String token) {
-        String email = extractEmailFromToken(token);
-        return userProfileCacheService.getUserProfileByEmail(email);
+        String username = extractUsernameFromToken(token);
+        return userProfileCacheService.getUserProfileByEmail(username);
     }
 
     @Override
     @Transactional
     public UserResponse updateUser(String token, UpdateUserRequest request) {
-        String email = extractEmailFromToken(token);
-        return updateUserByEmail(email, request);
+        String username = extractUsernameFromToken(token);
+        return updateUserByEmail(username, request);
     }
 
     @Override
     @Transactional
     public UserResponse updateUserPassword(String token, UpdateUserPasswordRequest request) {
-        String email = extractEmailFromToken(token);
-        User currentUser = findUserByEmail(email);
+        String username = extractUsernameFromToken(token);
+        User currentUser = findUserByUsername(username);
 
         validatePasswordChange(request, currentUser);
 
@@ -101,7 +101,7 @@ public class UserServiceImpl implements UserService {
 
         sendPasswordChangedNotification(currentUser);
 
-        log.info("Password updated successfully for user: {}", email);
+        log.info("Password updated successfully for user: {}", username);
         return buildUserResponse(currentUser);
     }
 
@@ -152,7 +152,7 @@ public class UserServiceImpl implements UserService {
     }
 
     public UserResponse updateUserByEmail(String email, UpdateUserRequest request) {
-        User currentUser = findUserByEmail(email);
+        User currentUser = findUserByUsername(email);
 
         updateUser(request, currentUser);
         uploadAvatarIfPresent(currentUser, request.getAvatar());
@@ -255,7 +255,7 @@ public class UserServiceImpl implements UserService {
         return user.getEmail();
     }
 
-    private String extractEmailFromToken(String token) {
+    private String extractUsernameFromToken(String token) {
         String cleanedToken = cleanToken(token);
         if (jwtTokenProvider.validateAccessToken(cleanedToken)) {
             return jwtTokenProvider.getUsername(cleanedToken);
@@ -271,8 +271,8 @@ public class UserServiceImpl implements UserService {
         return token.startsWith("Bearer ") ? token.substring(7) : token;
     }
 
-    private User findUserByEmail(String email) {
-        return userRepository.findByEmailAndDeletedFalse(email)
+    private User findUserByUsername(String username) {
+        return userRepository.findByUsernameAndDeletedFalse(username)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 

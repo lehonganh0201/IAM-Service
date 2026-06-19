@@ -1,5 +1,8 @@
 package com.example.iamservice.service;
 
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResult;
+import com.example.iamservice.domain.dto.request.AuditLogCommand;
 import com.example.iamservice.domain.dto.response.AuditLogResponse;
 import com.example.iamservice.domain.dto.response.common.PageResponse;
 import org.springframework.data.domain.Pageable;
@@ -25,5 +28,15 @@ public interface AuditLogService {
             Instant from,
             Instant to,
             Pageable pageable
+    );
+
+    void save(AuditLogCommand command);
+
+    void saveAuthAudit(
+            AuditAction action,
+            AuditResult result,
+            String usernameOrEmail,
+            Long actorUserId,
+            String errorMessage
     );
 }

@@ -53,7 +53,7 @@ management:
 
 app:
   identity-provider:
-    type: ${APP_IDENTITY_PROVIDER_TYPE:SELF}
+    type: ${APP_IDENTITY_PROVIDER_TYPE:KEYCLOAK}
 
   jwt:
     secret: ${JWT_SECRET}
