@@ -1,4 +1,4 @@
-package com.example.iamservice.service.impl;
+package com.example.iamservice.service.keycloak;
 
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.dto.response.KeycloakTokenResponse;

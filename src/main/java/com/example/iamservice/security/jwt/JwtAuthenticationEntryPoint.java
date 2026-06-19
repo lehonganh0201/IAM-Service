@@ -6,7 +6,7 @@ import com.example.iamservice.constant.AuditResult;
 import com.example.iamservice.domain.dto.request.AuditLogCommand;
 import com.example.iamservice.domain.dto.response.common.ApiError;
 import com.example.iamservice.domain.dto.response.common.ApiResponse;
-import com.example.iamservice.service.impl.AuditLogService;
+import com.example.iamservice.service.AuditLogService;
 import com.example.iamservice.util.AuditRequestInfoProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;

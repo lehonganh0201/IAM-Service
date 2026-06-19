@@ -24,9 +24,9 @@ public class UserProfileCacheService {
 
     private final UserRepository userRepository;
 
-    @Cacheable(value = "users", key = "#email")
-    public UserResponse getUserProfileByEmail(String email) {
-        User user = userRepository.findByEmailAndDeletedFalse(email)
+    @Cacheable(value = "users", key = "#username")
+    public UserResponse getUserProfileByEmail(String username) {
+        User user = userRepository.findByUsernameAndDeletedFalse(username)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         return UserResponse.builder()

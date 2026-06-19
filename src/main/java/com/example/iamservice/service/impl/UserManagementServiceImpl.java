@@ -15,6 +15,7 @@ import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.repository.specification.UserSpecification;
 import com.example.iamservice.service.UserManagementService;
+import com.example.iamservice.service.keycloak.KeycloakAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
