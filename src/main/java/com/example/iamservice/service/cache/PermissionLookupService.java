@@ -1,4 +1,4 @@
-package com.example.iamservice.service.impl;
+package com.example.iamservice.service.cache;
 
 import com.example.iamservice.repository.PermissionRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ public class PermissionLookupService {
 
         String normalizedPermission = normalize(permissionCode);
 
-        return getPermissionCodes(userId).stream()
+        return permissionLookupRepository.findActivePermissionCodesByUserId(userId).stream()
                 .map(this::normalize)
                 .anyMatch(normalizedPermission::equals);
     }

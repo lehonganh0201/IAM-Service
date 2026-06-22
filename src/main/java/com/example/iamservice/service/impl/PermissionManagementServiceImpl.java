@@ -12,6 +12,7 @@ import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.PermissionRepository;
 import com.example.iamservice.repository.specification.PermissionSpecification;
 import com.example.iamservice.service.PermissionManagementService;
+import com.example.iamservice.service.audit.SoftDeleteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

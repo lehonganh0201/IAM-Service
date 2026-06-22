@@ -15,6 +15,7 @@ import com.example.iamservice.repository.PermissionRepository;
 import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.specification.RoleSpecification;
 import com.example.iamservice.service.RoleManagementService;
+import com.example.iamservice.service.audit.SoftDeleteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

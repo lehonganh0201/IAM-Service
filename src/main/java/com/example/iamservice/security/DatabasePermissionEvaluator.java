@@ -1,6 +1,6 @@
 package com.example.iamservice.security;
 
-import com.example.iamservice.service.impl.PermissionLookupService;
+import com.example.iamservice.service.cache.PermissionLookupService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.PermissionEvaluator;

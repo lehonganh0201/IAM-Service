@@ -1,4 +1,4 @@
-package com.example.iamservice.service.impl;
+package com.example.iamservice.service.audit;
 
 import com.example.iamservice.domain.entity.common.SoftDeleteAuditing;
 import com.example.iamservice.util.CurrentUserProvider;
