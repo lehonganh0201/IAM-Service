@@ -19,11 +19,11 @@ import com.example.iamservice.domain.dto.response.UserResponse;
 public interface UserService {
     UserResponse register(UserRequest request);
 
-    UserResponse getMe(String token);
+    UserResponse getMe();
 
-    UserResponse updateUser(String token, UpdateUserRequest request);
+    UserResponse updateUser(UpdateUserRequest request);
 
-    UserResponse updateUserPassword(String token, UpdateUserPasswordRequest request);
+    UserResponse updateUserPassword(UpdateUserPasswordRequest request);
 
     void verifyEmail(VerifyEmailRequest request);
 

@@ -14,13 +14,13 @@ import com.example.iamservice.exception.ConflictException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.exception.UnauthorizedException;
 import com.example.iamservice.repository.UserRepository;
-import com.example.iamservice.security.jwt.JwtTokenProvider;
 import com.example.iamservice.service.AuditLogService;
 import com.example.iamservice.service.EmailService;
 import com.example.iamservice.service.UserService;
 import com.example.iamservice.service.cache.UserProfileCacheService;
 import com.example.iamservice.service.keycloak.KeycloakAdminService;
 import com.example.iamservice.util.CloudinaryUtil;
+import com.example.iamservice.util.CurrentUserProvider;
 import com.example.iamservice.util.RandomUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -29,6 +29,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
@@ -54,7 +55,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
     private final CloudinaryUtil cloudinaryUtil;
     private final EmailService emailService;
     private final StringRedisTemplate redisTemplate;
@@ -62,6 +62,7 @@ public class UserServiceImpl implements UserService {
     private final AppProperties appProperties;
     private final KeycloakAdminService keycloakAdminService;
     private final AuditLogService auditLogService;
+    private final CurrentUserProvider currentUserProvider;
 
     @Value("${app.domain-url:http://localhost:8080}")
     private String domainUrl;
@@ -77,28 +78,32 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getMe(String token) {
-        String username = extractUsernameFromToken(token);
+    public UserResponse getMe() {
+        String username = currentUserProvider.getCurrentUsername();
         return userProfileCacheService.getUserProfileByEmail(username);
     }
 
     @Override
     @Transactional
-    public UserResponse updateUser(String token, UpdateUserRequest request) {
-        String username = extractUsernameFromToken(token);
+    public UserResponse updateUser(UpdateUserRequest request) {
+        String username = currentUserProvider.getCurrentUsername();
         return updateUserByEmail(username, request);
     }
 
     @Override
     @Transactional
-    public UserResponse updateUserPassword(String token, UpdateUserPasswordRequest request) {
-        String username = extractUsernameFromToken(token);
+    public UserResponse updateUserPassword(UpdateUserPasswordRequest request) {
+        String username = currentUserProvider.getCurrentUsername();
         User currentUser = findUserByUsername(username);
 
         validatePasswordChange(request, currentUser);
 
         currentUser.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         currentUser = userRepository.save(currentUser);
+
+        if (isKeycloakMode() && StringUtils.hasText(currentUser.getKeycloakUserId())) {
+            updatePasswordInKeycloak(currentUser.getKeycloakUserId(), request.getNewPassword());
+        }
 
         sendPasswordChangedNotification(currentUser);
 
@@ -152,7 +157,20 @@ public class UserServiceImpl implements UserService {
         });
     }
 
-    public UserResponse updateUserByEmail(String email, UpdateUserRequest request) {
+    private void updatePasswordInKeycloak(String keycloakUserId, String newPassword) {
+        try {
+            keycloakAdminService.resetPassword(keycloakUserId, newPassword, false);
+        } catch (Exception e) {
+            log.error("Failed to update password in Keycloak for userId: {}", keycloakUserId, e);
+            throw new BadRequestException("Không thể cập nhật mật khẩu. Vui lòng thử lại sau.");
+        }
+    }
+
+    private boolean isKeycloakMode() {
+        return appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK;
+    }
+
+    private UserResponse updateUserByEmail(String email, UpdateUserRequest request) {
         User currentUser = findUserByUsername(email);
 
         updateUser(request, currentUser);
@@ -167,7 +185,7 @@ public class UserServiceImpl implements UserService {
         return buildUserResponse(currentUser);
     }
 
-    public void updateUser(UpdateUserRequest request, User user) {
+    private void updateUser(UpdateUserRequest request, User user) {
         if ( request == null ) {
             return;
         }
@@ -254,22 +272,6 @@ public class UserServiceImpl implements UserService {
             return user.getDisplayName();
         }
         return user.getEmail();
-    }
-
-    private String extractUsernameFromToken(String token) {
-        String cleanedToken = cleanToken(token);
-        if (jwtTokenProvider.validateAccessToken(cleanedToken)) {
-            return jwtTokenProvider.getUsername(cleanedToken);
-        }
-        throw new UnauthorizedException("Token is not valid");
-    }
-
-    private String cleanToken(String token) {
-        if (token == null || token.isBlank()) {
-            throw new UnauthorizedException("Token is missing");
-        }
-        token = token.trim();
-        return token.startsWith("Bearer ") ? token.substring(7) : token;
     }
 
     private User findUserByUsername(String username) {
