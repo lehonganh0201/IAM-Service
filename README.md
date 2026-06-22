@@ -149,8 +149,7 @@ curl -X POST http://localhost:8080/api/auth/logout \
 Sau khi `docker compose up -d`, chạy:
 
 ```bash
-source .env 2>/dev/null || true
-./scripts/keycloak-setup.sh
+./scripts/iam-realm.json
 ```
 
 Script tạo:
