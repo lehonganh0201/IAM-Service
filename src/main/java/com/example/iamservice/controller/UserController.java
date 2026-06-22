@@ -26,32 +26,32 @@ import static org.springframework.http.HttpStatus.OK;
  * ----------------------------------------------------------------------------
  */
 
-@RestApiV1
-@RequiredArgsConstructor
-public class UserController {
-    private final UserService userService;
-
-    @PostMapping("/users")
-    public ResponseEntity<RestData<UserResponse>> register(@RequestBody @Valid UserRequest request) {
-        return VsResponseUtil.success(userService.register(request), "Register success", CREATED);
-    }
-
-    @GetMapping("/users/me")
-    public ResponseEntity<RestData<UserResponse>> getMe(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
-        return VsResponseUtil.success(userService.getMe(token), "Get my info success", OK);
-    }
-
-    @PutMapping("/users")
-    public ResponseEntity<RestData<UserResponse>> updateUser(
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION) String token,
-            @ModelAttribute @Valid UpdateUserRequest request) {
-        return VsResponseUtil.success(userService.updateUser(token, request), "Update user success", OK);
-    }
-
-    @PutMapping("/users/password")
-    public ResponseEntity<RestData<UserResponse>> updateUserPassword(
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION) String token,
-            @RequestBody @Valid UpdateUserPasswordRequest request) {
-        return VsResponseUtil.success(userService.updateUserPassword(token, request), "Update user password success", OK);
-    }
-}
+//@RestApiV1
+//@RequiredArgsConstructor
+//public class UserController {
+//    private final UserService userService;
+//
+//    @PostMapping("/users")
+//    public ResponseEntity<RestData<UserResponse>> register(@RequestBody @Valid UserRequest request) {
+//        return VsResponseUtil.success(userService.register(request), "Register success", CREATED);
+//    }
+//
+//    @GetMapping("/users/me")
+//    public ResponseEntity<RestData<UserResponse>> getMe(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
+//        return VsResponseUtil.success(userService.getMe(token), "Get my info success", OK);
+//    }
+//
+//    @PutMapping("/users")
+//    public ResponseEntity<RestData<UserResponse>> updateUser(
+//            @RequestHeader(name = HttpHeaders.AUTHORIZATION) String token,
+//            @ModelAttribute @Valid UpdateUserRequest request) {
+//        return VsResponseUtil.success(userService.updateUser(token, request), "Update user success", OK);
+//    }
+//
+//    @PutMapping("/users/password")
+//    public ResponseEntity<RestData<UserResponse>> updateUserPassword(
+//            @RequestHeader(name = HttpHeaders.AUTHORIZATION) String token,
+//            @RequestBody @Valid UpdateUserPasswordRequest request) {
+//        return VsResponseUtil.success(userService.updateUserPassword(token, request), "Update user password success", OK);
+//    }
+//}
