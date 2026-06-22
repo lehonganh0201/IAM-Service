@@ -1,4 +1,4 @@
-package com.example.iamservice.service.impl;
+package com.example.iamservice.service.cache;
 
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.User;
@@ -38,7 +38,7 @@ public class UserProfileCacheService {
                 .build();
     }
 
-    @CacheEvict(value = "users", key = "#email")
-    public void evictUserProfile(String email) {
+    @CacheEvict(value = "users", key = "#username")
+    public void evictUserProfile(String username) {
     }
 }

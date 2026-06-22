@@ -18,6 +18,7 @@ import com.example.iamservice.security.jwt.JwtTokenProvider;
 import com.example.iamservice.service.AuditLogService;
 import com.example.iamservice.service.EmailService;
 import com.example.iamservice.service.UserService;
+import com.example.iamservice.service.cache.UserProfileCacheService;
 import com.example.iamservice.service.keycloak.KeycloakAdminService;
 import com.example.iamservice.util.CloudinaryUtil;
 import com.example.iamservice.util.RandomUtil;
