@@ -21,7 +21,7 @@ public class CurrentUserProvider {
         Long userId = getCurrentUserIdOrNull();
 
         if (userId == null) {
-            throw new UnauthorizedException("Unauthorized");
+            throw new UnauthorizedException("Unauthorized when get current user id");
         }
 
         return userId;
@@ -39,6 +39,22 @@ public class CurrentUserProvider {
 
         if (principal instanceof IamPrincipal iamPrincipal) {
             return iamPrincipal.userId();
+        }
+
+        return null;
+    }
+
+    public String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new UnauthorizedException("Unauthorized when get current username");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof IamPrincipal iamPrincipal) {
+            return iamPrincipal.username();
         }
 
         return null;
