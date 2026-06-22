@@ -1768,20 +1768,7 @@
     "storeToken" : false,
     "linkOnly" : false,
     "hideOnLogin" : false,
-    "config" : {
-      "offlineAccess" : "false",
-      "acceptsPromptNoneForwardFromClient" : "false",
-      "clientId" : "",
-      "disableUserInfo" : "false",
-      "showInAccountConsole" : "ALWAYS",
-      "filteredByClaim" : "false",
-      "syncMode" : "IMPORT",
-      "clientSecret" : "",
-      "caseSensitiveOriginalUsername" : "false",
-      "issuer" : "https://accounts.google.com",
-      "jwtAuthorizationGrantMaxAllowedAssertionExpiration" : "3600",
-      "guiOrder" : "0"
-    },
+    "config" : {},
     "types" : [ ]
   } ],
   "identityProviderMappers" : [ ],
