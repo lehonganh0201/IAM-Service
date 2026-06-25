@@ -28,14 +28,4 @@ public interface RoleRepository extends JpaRepository<Role, Long>, JpaSpecificat
     List<Role> findByCodeInAndDeletedFalse(Collection<String> codes);
     @EntityGraph(attributePaths = {"permissions"})
     Optional<Role> findWithPermissionsByIdAndDeletedFalse(Long id);
-
-    @EntityGraph(attributePaths = {"permissions"})
-    Page<Role> findByDeletedFalse(Pageable pageable);
-
-    @EntityGraph(attributePaths = {"permissions"})
-    Page<Role> findByDeletedFalseAndCodeContainingIgnoreCaseOrDeletedFalseAndNameContainingIgnoreCase(
-            String code,
-            String name,
-            Pageable pageable
-    );
 }

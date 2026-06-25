@@ -21,8 +21,8 @@ insert into roles(code, name, description, deleted, created_at, updated_at)
 values ('USER_MANAGER', 'User Manager', 'Manage users', false, now(), now()),
        ('SYSTEM_ADMIN', 'System Admin', 'Manage roles and permissions', false, now(), now()) on conflict do nothing;
 
-insert into role_permissions(role_id, permission_id)
-select r.id, p.id
+insert into role_permissions(role_id, permission_id, created_at, updated_at, created_by, last_modified_by)
+select r.id, p.id, now(), now(), null, null
 from roles r
          join permissions p on p.code in (
                                           'USER_CREATE',
@@ -36,8 +36,8 @@ from roles r
     )
 where r.code = 'USER_MANAGER' on conflict do nothing;
 
-insert into role_permissions(role_id, permission_id)
-select r.id, p.id
+insert into role_permissions(role_id, permission_id, created_at, updated_at, created_by, last_modified_by)
+select r.id, p.id, now(), now(), null, null
 from roles r
          join permissions p on p.code in (
                                           'ROLE_CREATE',

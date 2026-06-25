@@ -1,14 +1,10 @@
 package com.example.iamservice.domain.entity;
 
-import com.example.iamservice.domain.entity.common.DateAuditing;
 import com.example.iamservice.domain.entity.common.SoftDeleteAuditing;
-import com.example.iamservice.domain.entity.common.UserDateAuditing;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * ----------------------------------------------------------------------------
@@ -55,15 +51,6 @@ public class User extends SoftDeleteAuditing {
     private LocalDate dateOfBirth;
 
     private String avatarUrl;
-
-    @Builder.Default
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
 
     public boolean isActive() {
         return Boolean.TRUE.equals(enabled)

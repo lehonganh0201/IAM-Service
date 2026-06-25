@@ -33,26 +33,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     boolean existsByUsernameAndDeletedFalse(String username);
 
-    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
-    Optional<User> findWithRolesById(Long id);
-
     @EntityGraph(attributePaths = {"roles"})
     Optional<User> findWithRolesByIdAndDeletedFalse(Long id);
-
-    @EntityGraph(attributePaths = {"roles"})
-    Page<User> findByDeletedFalse(Pageable pageable);
-
-    @Query("""
-        select distinct u
-        from User u
-        left join fetch u.roles r
-        where u.deleted = false
-          and (
-                lower(u.username) like lower(concat('%', :keyword, '%'))
-             or lower(u.email) like lower(concat('%', :keyword, '%'))
-             or lower(coalesce(u.firstName, '')) like lower(concat('%', :keyword, '%'))
-             or lower(coalesce(u.lastName, '')) like lower(concat('%', :keyword, '%'))
-          )
-        """)
-    Page<User> searchActiveUsersForList(String keyword, Pageable pageable);
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -31,25 +32,19 @@ public interface PermissionRepository extends JpaRepository<Permission, Long>, J
 
     Optional<Permission> findByIdAndDeletedFalse(Long id);
 
-    Page<Permission> findByDeletedFalse(Pageable pageable);
-
-    Page<Permission> findByDeletedFalseAndCodeContainingIgnoreCaseOrDeletedFalseAndNameContainingIgnoreCase(
-            String code,
-            String name,
-            Pageable pageable
-    );
-
-    @Query("""
-            select distinct p.code
-            from User u
-            join u.roles r
-            join r.permissions p
-            where u.id = :userId
-              and u.deleted = false
-              and u.enabled = true
-              and u.locked = false
-              and r.deleted = false
-              and p.deleted = false
-            """)
-    Set<String> findActivePermissionCodesByUserId(Long userId);
+    @Query(value = """
+        select distinct p.code
+        from users u
+        join user_roles ur on ur.user_id = u.id
+        join roles r on r.id = ur.role_id
+        join role_permissions rp on rp.role_id = r.id
+        join permissions p on p.id = rp.permission_id
+        where u.id = :userId
+          and u.deleted = false
+          and u.enabled = true
+          and u.locked = false
+          and r.deleted = false
+          and p.deleted = false
+        """, nativeQuery = true)
+    Set<String> findActivePermissionCodesByUserId(@Param("userId") Long userId);
 }
