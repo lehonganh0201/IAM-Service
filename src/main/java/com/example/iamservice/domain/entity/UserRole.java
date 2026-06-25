@@ -1,31 +1,38 @@
 package com.example.iamservice.domain.entity;
 
-import com.example.iamservice.domain.entity.common.SoftDeleteAuditing;
+import com.example.iamservice.domain.entity.common.UserDateAuditing;
 import jakarta.persistence.*;
 import lombok.*;
 
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    09/06/2026 at 13:15
+ * Created on:    25/06/2026 at 16:22
  * Project:       IAMService
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
  */
 
 @Entity
-@Table(name = "roles")
+@Table(name = "user_roles",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"user_id", "role_id"})
+        })
 @Getter
-@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class Role extends SoftDeleteAuditing {
+@Setter
+public class UserRole extends UserDateAuditing {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String code;
-    private String name;
-    private String description;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    @Column(name = "role_id", nullable = false)
+    private Long roleId;
+
 }

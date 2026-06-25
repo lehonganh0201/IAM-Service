@@ -4,6 +4,9 @@ import com.example.iamservice.domain.dto.response.RoleSummaryResponse;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.repository.RoleRepository;
+import com.example.iamservice.repository.UserRoleRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
@@ -19,16 +22,23 @@ import java.util.stream.Collectors;
  */
 
 @Component
+@RequiredArgsConstructor
 public class UserMapper {
 
+    private final UserRoleRepository userRoleRepository;
+    private final RoleRepository roleRepository;
+
     public UserResponse toResponse(User user) {
-        Set<RoleSummaryResponse> roles = user.getRoles() == null
-                ? Set.of()
-                : user.getRoles()
-                .stream()
-                .filter(role -> !Boolean.TRUE.equals(role.getDeleted()))
-                .map(this::toRoleSummary)
-                .collect(Collectors.toSet());
+
+        Set<Long> roleIds = userRoleRepository.findRoleIdsByUserId(user.getId());
+
+        Set<RoleSummaryResponse> roles =
+                roleIds == null ? Set.of()
+                        : roleRepository.findAllById(roleIds)
+                        .stream()
+                        .filter(role -> !Boolean.TRUE.equals(role.getDeleted()))
+                        .map(this::toRoleSummary)
+                        .collect(Collectors.toSet());
 
         return new UserResponse(
                 user.getId(),

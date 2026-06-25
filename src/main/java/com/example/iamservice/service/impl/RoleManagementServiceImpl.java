@@ -7,11 +7,13 @@ import com.example.iamservice.domain.dto.request.UpdateRoleRequest;
 import com.example.iamservice.domain.dto.response.RoleResponse;
 import com.example.iamservice.domain.entity.Permission;
 import com.example.iamservice.domain.entity.Role;
+import com.example.iamservice.domain.entity.RolePermission;
 import com.example.iamservice.domain.mapper.RoleMapper;
 import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.ConflictException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.PermissionRepository;
+import com.example.iamservice.repository.RolePermissionRepository;
 import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.specification.RoleSpecification;
 import com.example.iamservice.service.RoleManagementService;
@@ -27,6 +29,7 @@ import org.springframework.util.StringUtils;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * ----------------------------------------------------------------------------
@@ -50,6 +53,7 @@ public class RoleManagementServiceImpl implements RoleManagementService {
     private final PermissionRepository permissionRepository;
     private final RoleMapper roleMapper;
     private final SoftDeleteService softDeleteService;
+    private final RolePermissionRepository rolePermissionRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -86,10 +90,20 @@ public class RoleManagementServiceImpl implements RoleManagementService {
                 .code(normalizedCode)
                 .name(request.getName())
                 .description(request.getDescription())
-                .permissions(resolvePermissions(request.getPermissionCodes()))
                 .build();
 
         Role savedRole = roleRepository.save(role);
+
+        Set<Permission> permissions = resolvePermissions(request.getPermissionCodes());
+
+        List<RolePermission> rolePermissions = permissions.stream()
+                .map(permission -> RolePermission.builder()
+                        .roleId(savedRole.getId())
+                        .permissionId(permission.getId())
+                        .build())
+                .toList();
+
+        rolePermissionRepository.saveAll(rolePermissions);
 
         return roleMapper.toResponse(savedRole);
     }
@@ -130,11 +144,18 @@ public class RoleManagementServiceImpl implements RoleManagementService {
 
         Set<Permission> permissions = resolvePermissions(request.getPermissionCodes());
 
-        role.setPermissions(permissions);
+        rolePermissionRepository.deleteByRoleId(role.getId());
 
-        Role savedRole = roleRepository.save(role);
+        List<RolePermission> rolePermissions = permissions.stream()
+                .map(permission -> RolePermission.builder()
+                        .roleId(role.getId())
+                        .permissionId(permission.getId())
+                        .build())
+                .toList();
 
-        return roleMapper.toResponse(savedRole);
+        rolePermissionRepository.saveAll(rolePermissions);
+
+        return roleMapper.toResponse(role);
     }
 
     @Override
@@ -160,16 +181,28 @@ public class RoleManagementServiceImpl implements RoleManagementService {
             return Set.of();
         }
 
-        Set<String> normalizedCodes = permissionCodes
-                .stream()
+        Set<String> normalizedCodes = permissionCodes.stream()
+                .filter(code -> code != null && !code.isBlank())
                 .map(this::normalizeCode)
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
+
+        if (normalizedCodes.isEmpty()) {
+            return Set.of();
+        }
 
         List<Permission> permissions =
                 permissionRepository.findByCodeInAndDeletedFalse(normalizedCodes);
 
-        if (permissions.size() != normalizedCodes.size()) {
-            throw new NotFoundException("Some permissions do not exist or have been deleted");
+        Set<String> foundCodes = permissions.stream()
+                .map(Permission::getCode)
+                .collect(Collectors.toSet());
+
+        Set<String> missingCodes = normalizedCodes.stream()
+                .filter(code -> !foundCodes.contains(code))
+                .collect(Collectors.toSet());
+
+        if (!missingCodes.isEmpty()) {
+            throw new NotFoundException("Missing permissions: " + missingCodes);
         }
 
         return new HashSet<>(permissions);

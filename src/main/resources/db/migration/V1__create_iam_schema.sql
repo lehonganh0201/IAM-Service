@@ -63,16 +63,24 @@ create unique index uk_permissions_code_active
 
 create table user_roles
 (
+    id               bigserial primary key,
     user_id bigint not null references users (id),
     role_id bigint not null references roles (id),
-    primary key (user_id, role_id)
+    created_at       timestamp    not null,
+    updated_at       timestamp    not null,
+    created_by       bigint,
+    last_modified_by bigint
 );
 
 create table role_permissions
 (
+    id               bigserial primary key,
     role_id       bigint not null references roles (id),
     permission_id bigint not null references permissions (id),
-    primary key (role_id, permission_id)
+    created_at       timestamp    not null,
+    updated_at       timestamp    not null,
+    created_by       bigint,
+    last_modified_by bigint
 );
 
 create table refresh_tokens

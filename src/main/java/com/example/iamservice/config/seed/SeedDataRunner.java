@@ -3,9 +3,11 @@ package com.example.iamservice.config.seed;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.domain.entity.UserRole;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
+import com.example.iamservice.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -13,6 +15,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 /**
  * ----------------------------------------------------------------------------
@@ -32,6 +36,7 @@ public class SeedDataRunner implements CommandLineRunner {
     private final AppProperties appProperties;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -41,6 +46,7 @@ public class SeedDataRunner implements CommandLineRunner {
     }
 
     private void seedLocalAdmin() {
+
         String username = appProperties.getSeed().getAdminUsername();
         String email = appProperties.getSeed().getAdminEmail();
         String rawPassword = appProperties.getSeed().getAdminPassword();
@@ -66,32 +72,35 @@ public class SeedDataRunner implements CommandLineRunner {
 
         admin.setUsername(username);
         admin.setEmail(email);
-
-        admin.setPasswordHash(encodedPassword);
         admin.setPasswordHash(encodedPassword);
 
         admin.setEnabled(true);
         admin.setLocked(false);
         admin.setDeleted(false);
 
-        if (admin.getFirstName() == null) {
-            admin.setFirstName("Local");
-        }
+        if (admin.getFirstName() == null) admin.setFirstName("Local");
+        if (admin.getLastName() == null) admin.setLastName("Admin");
 
-        if (admin.getLastName() == null) {
-            admin.setLastName("Admin");
-        }
+        admin = userRepository.save(admin);
 
-        admin.getRoles().clear();
-        admin.getRoles().add(userManagerRole);
-        admin.getRoles().add(systemAdminRole);
+        userRoleRepository.deleteByUserId(admin.getId());
 
-        userRepository.save(admin);
+        assignRole(admin.getId(), userManagerRole.getId());
+        assignRole(admin.getId(), systemAdminRole.getId());
 
-        if (isNew) {
-            log.info("Seeded local admin user: username={}, email={}", username, email);
-        } else {
-            log.info("Local admin user already exists. Synchronized password, status and roles.");
-        }
+        log.info(isNew
+                        ? "Seeded local admin user: username={}, email={}"
+                        : "Updated local admin user: roles + credentials synced",
+                username, email);
+    }
+
+    private void assignRole(Long userId, Long roleId) {
+        UserRole ur = new UserRole();
+        ur.setUserId(userId);
+        ur.setRoleId(roleId);
+        ur.setCreatedAt(LocalDateTime.now());
+        ur.setUpdatedAt(LocalDateTime.now());
+
+        userRoleRepository.save(ur);
     }
 }
