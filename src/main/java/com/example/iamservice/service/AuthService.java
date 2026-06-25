@@ -1,10 +1,8 @@
 package com.example.iamservice.service;
 
-import com.example.iamservice.domain.dto.request.AuthRequest;
-import com.example.iamservice.domain.dto.request.ForgotPasswordRequest;
-import com.example.iamservice.domain.dto.request.ResetPasswordRequest;
-import com.example.iamservice.domain.dto.request.UserRequest;
+import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
+import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;
 
 /**
  * ----------------------------------------------------------------------------
@@ -20,11 +18,15 @@ public interface AuthService {
 
     AuthResponse login(AuthRequest request);
 
-    AuthResponse refreshToken(String token);
+    KeycloakLoginResponse getLoginUrl(String provider);
+
+    AuthResponse refreshToken(RefreshTokenRequest token);
 
     void forgotPassword(ForgotPasswordRequest request);
 
     void resetPassword(ResetPasswordRequest request);
 
-    void logout(String token);
+    void logout(LogoutRequest token);
+
+    AuthResponse exchangeKeycloakCode(KeycloakCodeExchangeRequest request);
 }

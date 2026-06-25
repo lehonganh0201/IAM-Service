@@ -1,5 +1,6 @@
 package com.example.iamservice.aop.aspect;
 
+import com.example.iamservice.aop.annotation.AuditActivity;
 import com.example.iamservice.aop.annotation.RateLimit;
 import org.aspectj.lang.annotation.Pointcut;
 
@@ -35,5 +36,8 @@ public class CommonJoinPointConfig {
             "execution(* com.example.iamservice.controller.UserController.updateUser(..)) || " +
             "execution(* com.example.iamservice.controller.UserController.getMe(..))")
     public void userActivityLogController() {}
+
+    @Pointcut("@annotation(auditActivity)")
+    public void auditActivityPointcut(AuditActivity auditActivity) {}
 }
 

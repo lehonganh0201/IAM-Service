@@ -1,9 +1,15 @@
 package com.example.iamservice.repository;
 
 import com.example.iamservice.domain.entity.Role;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -16,6 +22,20 @@ import java.util.Optional;
  */
 
 @Repository
-public interface RoleRepository extends JpaRepository<Role, Long> {
-    Optional<Role> findByName(String defaultRole);
+public interface RoleRepository extends JpaRepository<Role, Long>, JpaSpecificationExecutor<Role> {
+    Optional<Role> findByCodeAndDeletedFalse(String code);
+    boolean existsByCodeAndDeletedFalse(String code);
+    List<Role> findByCodeInAndDeletedFalse(Collection<String> codes);
+    @EntityGraph(attributePaths = {"permissions"})
+    Optional<Role> findWithPermissionsByIdAndDeletedFalse(Long id);
+
+    @EntityGraph(attributePaths = {"permissions"})
+    Page<Role> findByDeletedFalse(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"permissions"})
+    Page<Role> findByDeletedFalseAndCodeContainingIgnoreCaseOrDeletedFalseAndNameContainingIgnoreCase(
+            String code,
+            String name,
+            Pageable pageable
+    );
 }

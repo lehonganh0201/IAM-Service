@@ -36,22 +36,20 @@ public class UserController {
         return VsResponseUtil.success(userService.register(request), "Register success", CREATED);
     }
 
-    @GetMapping("/users")
-    public ResponseEntity<RestData<UserResponse>> getMe(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
-        return VsResponseUtil.success(userService.getMe(token), "Get my info success", OK);
+    @GetMapping("/users/me")
+    public ResponseEntity<RestData<UserResponse>> getMe() {
+        return VsResponseUtil.success(userService.getMe(), "Get my info success", OK);
     }
 
     @PutMapping("/users")
     public ResponseEntity<RestData<UserResponse>> updateUser(
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION) String token,
             @ModelAttribute @Valid UpdateUserRequest request) {
-        return VsResponseUtil.success(userService.updateUser(token, request), "Update user success", OK);
+        return VsResponseUtil.success(userService.updateUser(request), "Update user success", OK);
     }
 
     @PutMapping("/users/password")
     public ResponseEntity<RestData<UserResponse>> updateUserPassword(
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION) String token,
             @RequestBody @Valid UpdateUserPasswordRequest request) {
-        return VsResponseUtil.success(userService.updateUserPassword(token, request), "Update user password success", OK);
+        return VsResponseUtil.success(userService.updateUserPassword(request), "Update user password success", OK);
     }
 }

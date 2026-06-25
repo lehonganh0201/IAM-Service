@@ -1,20 +1,28 @@
 package com.example.iamservice.security.jwt;
 
-import com.example.iamservice.base.RestData;
-import com.example.iamservice.base.VsResponseUtil;
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResourceType;
+import com.example.iamservice.constant.AuditResult;
+import com.example.iamservice.domain.dto.request.AuditLogCommand;
+import com.example.iamservice.domain.dto.response.common.ApiError;
+import com.example.iamservice.domain.dto.response.common.ApiResponse;
+import com.example.iamservice.service.AuditLogService;
+import com.example.iamservice.util.AuditRequestInfoProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Instant;
 
 /**
  * ----------------------------------------------------------------------------
@@ -31,47 +39,45 @@ import java.io.IOException;
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private final ObjectMapper objectMapper;
+    private final AuditLogService auditLogService;
+    private final AuditRequestInfoProvider auditRequestInfoProvider;
 
     @Override
-    public void commence(HttpServletRequest request,
-                         HttpServletResponse response,
-                         AuthenticationException authException) throws IOException {
+    public void commence(@NonNull HttpServletRequest request,
+                         @NonNull HttpServletResponse response,
+                         @NonNull AuthenticationException authException) throws IOException {
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        String message = determineErrorMessage(authException);
+        String requestId = MDC.get("requestId");
 
-        ResponseEntity<RestData<String>> restData = VsResponseUtil.error(
-                message,
-                "Request requires authentication",
-                HttpStatus.UNAUTHORIZED
+        ApiResponse<Void> body = new ApiResponse<>(
+                false,
+                "Unauthorized",
+                null,
+                ApiError.of("Authorization"),
+                Instant.now(),
+                request.getRequestURI(),
+                requestId
         );
 
-        writeResponse(response, restData);
-    }
+        auditLogService.save(
+                AuditLogCommand.builder()
+                        .actorUsername("anonymous")
+                        .action(AuditAction.UNAUTHORIZED)
+                        .resourceType(AuditResourceType.SECURITY)
+                        .result(AuditResult.FAILURE)
+                        .message("Unauthorized request")
+                        .errorMessage(authException.getMessage())
+                        .httpMethod(auditRequestInfoProvider.method())
+                        .requestPath(auditRequestInfoProvider.path())
+                        .ipAddress(auditRequestInfoProvider.ipAddress())
+                        .userAgent(auditRequestInfoProvider.userAgent())
+                        .requestId(auditRequestInfoProvider.requestId())
+                        .build()
+        );
 
-    private String determineErrorMessage(AuthenticationException authException) {
-        String exceptionName = authException.getClass().getSimpleName();
-
-        return switch (exceptionName) {
-            case "BadCredentialsException" -> "Invalid username or password";
-            case "UsernameNotFoundException" -> "User not found";
-            case "ExpiredJwtException", "InvalidTokenException" -> "Token is invalid or expired";
-            default -> "Authentication failed: " + authException.getMessage();
-        };
-    }
-
-    private void writeResponse(HttpServletResponse response, ResponseEntity<RestData<String>> restData) throws IOException {
-        try {
-            response.getOutputStream().write(objectMapper.writeValueAsBytes(restData.getBody()));
-            response.getOutputStream().flush();
-        } catch (Exception e) {
-            log.error("Failed to write authentication error response", e);
-            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.getOutputStream().write(objectMapper.writeValueAsBytes(
-                    VsResponseUtil.error("Internal server error", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR).getBody()
-            ));
-        }
+        objectMapper.writeValue(response.getOutputStream(), body);
     }
 }

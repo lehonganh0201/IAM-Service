@@ -1,39 +1,43 @@
 package com.example.iamservice.service.impl;
 
+import com.example.iamservice.config.properties.AppProperties;
+import com.example.iamservice.config.properties.IdentityProviderType;
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResourceType;
+import com.example.iamservice.constant.AuditResult;
 import com.example.iamservice.constant.EmailTemplate;
-import com.example.iamservice.domain.dto.request.AuthRequest;
-import com.example.iamservice.domain.dto.request.ForgotPasswordRequest;
-import com.example.iamservice.domain.dto.request.ResetPasswordRequest;
+import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
-import com.example.iamservice.domain.entity.Role;
+import com.example.iamservice.domain.dto.response.IssuedRefreshToken;
+import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;
+import com.example.iamservice.domain.dto.response.KeycloakTokenResponse;
+import com.example.iamservice.domain.entity.RefreshToken;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.exception.UnauthorizedException;
-import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
-import com.example.iamservice.security.UserPrincipal;
 import com.example.iamservice.security.jwt.JwtTokenProvider;
+import com.example.iamservice.service.AuditLogService;
 import com.example.iamservice.service.AuthService;
 import com.example.iamservice.service.EmailService;
+import com.example.iamservice.service.RefreshTokenService;
+import com.example.iamservice.service.keycloak.KeycloakUserService;
+import com.example.iamservice.util.AuditRequestInfoProvider;
 import com.example.iamservice.util.RandomUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * ----------------------------------------------------------------------------
@@ -50,67 +54,159 @@ import java.util.stream.Collectors;
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final AuthenticationManager authenticationManager;
     private final StringRedisTemplate redisTemplate;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
     private static final int RESET_TOKEN_EXPIRY_MINUTES = 15;
-    private static final boolean IS_REFRESH_TOKEN = true;
     private static final String RESET_PASSWORD_PREFIX = "RESET_PASSWORD_TOKEN:";
-    private static final String BLACKLIST_TOKEN_PREFIX = "BLACKLIST_TOKEN:";
-    private final RoleRepository roleRepository;
+    private final AppProperties appProperties;
+    private final RefreshTokenService refreshTokenService;
+    private final KeycloakUserService keycloakUserService;
+    private final AuditLogService auditLogService;
+    private final AuditRequestInfoProvider auditRequestInfoProvider;
 
     @Value("${app.domain-url}")
     private String domainUrl;
 
     @Override
+    @Transactional
     public AuthResponse login(AuthRequest request) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
-            if (Objects.isNull(authentication)) {
-                throw new UnauthorizedException("Login failed with wrong email or password");
-            }
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            log.info("User logged in successfully: {}", request.getEmail());
-            return generateAuthResponse((UserPrincipal) authentication.getPrincipal());
-
-        } catch (Exception ex) {
-            log.warn("Login failed for username or email {}: {}", request.getEmail(), ex.getMessage());
-            throw new UnauthorizedException("Login failed");
+        if (isKeycloakMode()) {
+            throw new BadRequestException("Password login is disabled in Keycloak mode. Use Keycloak login URL.");
         }
+
+        User user = findLoginUser(request.getUsernameOrEmail());
+
+        validateUserCanLogin(user);
+
+        String passwordHash = user.getPasswordHash();
+
+        if (passwordHash == null || !passwordEncoder.matches(request.getPassword(), passwordHash)) {
+            auditLogService.saveAuthAudit(
+                    AuditAction.AUTH_LOGIN_FAILURE,
+                    AuditResult.FAILURE,
+                    request.getUsernameOrEmail(),
+                    null,
+                    "Invalid username/email or password"
+            );
+
+            throw new UnauthorizedException("Invalid username/email or password");
+        }
+
+        IssuedRefreshToken issuedRefreshToken = refreshTokenService.issue(user.getId());
+        String accessToken = jwtTokenProvider.generateAccessToken(user);
+
+        auditLogService.saveAuthAudit(
+                AuditAction.AUTH_LOGIN_SUCCESS,
+                AuditResult.SUCCESS,
+                user.getUsername(),
+                user.getId(),
+                null
+        );
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(issuedRefreshToken.rawToken())
+                .tokenType("Bearer")
+                .refreshTokenExpiresAt(issuedRefreshToken.expiresAt())
+                .build();
     }
 
     @Override
-    public AuthResponse refreshToken(String token) {
-        String cleanedToken = cleanToken(token);
-
-        if (jwtTokenProvider.validateToken(cleanedToken) && jwtTokenProvider.isRefreshToken(cleanedToken)) {
-            String username = jwtTokenProvider.extractUsername(cleanedToken);
-            User user = findUserWithEmail(username);
-            Role role = findRoleByUser(user);
-
-            log.info("Token refreshed for user: {}", username);
-
-            return generateAuthResponse(UserPrincipal.create(user, role.getName()));
+    public KeycloakLoginResponse getLoginUrl(String provider) {
+        if (!isKeycloakMode()) {
+            throw new BadRequestException("Keycloak login URL is only available in Keycloak mode");
         }
-        throw new UnauthorizedException("Refresh token cannot access");
+
+        return new KeycloakLoginResponse(
+                "Please login via Keycloak",
+                keycloakUserService.buildAuthorizationUrl(provider),
+                provider
+        );
     }
 
-    private Role findRoleByUser(User user) {
-        return roleRepository.findById(user.getRoleId())
-                .orElseThrow(() -> new NotFoundException("Not found role " + user.getRoleId()));
+    @Override
+    @Transactional
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        if (isKeycloakMode()) {
+            KeycloakTokenResponse tokenResponse = keycloakUserService.refresh(request.getRefreshToken());
+
+            return AuthResponse.builder()
+                    .accessToken(tokenResponse.accessToken())
+                    .refreshToken(tokenResponse.refreshToken())
+                    .tokenType(tokenResponse.tokenType())
+                    .refreshTokenExpiresAt(
+                            Instant.now().plusSeconds(tokenResponse.refreshExpiresIn())
+                    )
+                    .build();
+        }
+
+        return refreshSelfToken(request);
+    }
+
+    @Override
+    @Transactional
+    public void logout(LogoutRequest request) {
+        if (isKeycloakMode()) {
+            keycloakUserService.logout(request.getRefreshToken());
+
+            logoutAuthLog();
+            return;
+        }
+
+        logoutAuthLog();
+        refreshTokenService.revoke(request.getRefreshToken());
+    }
+
+    private boolean isKeycloakMode() {
+        return appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK;
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse exchangeKeycloakCode(
+            KeycloakCodeExchangeRequest request
+    ) {
+        if (!isKeycloakMode()) {
+            throw new BadRequestException("Keycloak mode is not enabled");
+        }
+
+        KeycloakTokenResponse tokenResponse = keycloakUserService.exchangeCode(
+                request.getCode(),
+                request.getRedirectUri(),
+                request.getCodeVerifier()
+        );
+
+        return AuthResponse.builder()
+                .accessToken(tokenResponse.accessToken())
+                .refreshToken(tokenResponse.refreshToken())
+                .tokenType(tokenResponse.tokenType())
+                .refreshTokenExpiresAt(Instant.now().plusSeconds(tokenResponse.refreshExpiresIn()))
+                .build();
+    }
+
+    private void logoutAuthLog() {
+        auditLogService.save(
+                AuditLogCommand.builder()
+                        .action(AuditAction.AUTH_LOGOUT)
+                        .resourceType(AuditResourceType.AUTH)
+                        .result(AuditResult.SUCCESS)
+                        .message("Logout")
+                        .httpMethod(auditRequestInfoProvider.method())
+                        .requestPath(auditRequestInfoProvider.path())
+                        .ipAddress(auditRequestInfoProvider.ipAddress())
+                        .userAgent(auditRequestInfoProvider.userAgent())
+                        .requestId(auditRequestInfoProvider.requestId())
+                        .build()
+        );
     }
 
     @Override
     public void forgotPassword(ForgotPasswordRequest request) {
         String email = normalizeEmail(request.getEmail());
 
-        userRepository.findByEmail(email).ifPresentOrElse(
+        userRepository.findByEmailAndDeletedFalse(email).ifPresentOrElse(
                 user -> processPasswordResetRequest(user, email),
                 () -> logNonExistentEmailAttempt(email)
         );
@@ -131,26 +227,6 @@ public class AuthServiceImpl implements AuthService {
         User user = findUserWithId(Long.parseLong(userIdStr));
         updateUserPassword(user, request.getNewPassword());
         sendPasswordChangedNotification(user);
-    }
-
-    @Override
-    public void logout(String token) {
-        String cleanedToken = cleanToken(token);
-
-        if (!jwtTokenProvider.validateToken(cleanedToken) || jwtTokenProvider.isRefreshToken(cleanedToken)) {
-            throw new BadRequestException("Token không hợp lệ hoặc là refresh token");
-        }
-
-        long expiration = jwtTokenProvider.getExpiration(cleanedToken);
-        long ttl = expiration - System.currentTimeMillis();
-
-        if (ttl > 0) {
-            String blacklistKey = BLACKLIST_TOKEN_PREFIX + cleanedToken;
-            redisTemplate.opsForValue().set(blacklistKey, "blacklisted", Duration.ofMillis(ttl));
-            log.info("Token has been blacklisted successfully for user: {}", jwtTokenProvider.extractUsername(cleanedToken));
-        } else {
-            log.warn("Token already expired, no need to blacklist");
-        }
     }
 
     private String normalizeEmail(String email) {
@@ -185,7 +261,7 @@ public class AuthServiceImpl implements AuthService {
                     user.getEmail(),
                     EmailTemplate.PASSWORD_RESET,
                     Map.of(
-                            "userName", getDisplayName(user),
+                            "userName", user.getDisplayName(),
                             "resetLink", resetLink,
                             "expiryMinutes", RESET_TOKEN_EXPIRY_MINUTES
                     )
@@ -195,9 +271,24 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    private String getDisplayName(User user) {
-        return user.getFullName() != null && !user.getFullName().isBlank()
-                ? user.getFullName() : user.getEmail();
+    private User findLoginUser(String usernameOrEmail) {
+        return userRepository.findByUsernameAndDeletedFalse(usernameOrEmail)
+                .or(() -> userRepository.findByEmailAndDeletedFalse(usernameOrEmail))
+                .orElseThrow(() -> new UnauthorizedException("Invalid username/email or password"));
+    }
+
+    private void validateUserCanLogin(User user) {
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            throw new DisabledException("User is disabled");
+        }
+
+        if (Boolean.TRUE.equals(user.getLocked())) {
+            throw new LockedException("User is locked");
+        }
+
+        if (Boolean.TRUE.equals(user.getDeleted())) {
+            throw new DisabledException("User is deleted");
+        }
     }
 
     private void logNonExistentEmailAttempt(String email) {
@@ -205,7 +296,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void updateUserPassword(User user, String newPassword) {
-        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         log.info("Password reset successfully for user ID: {}", user.getId());
     }
@@ -216,7 +307,7 @@ public class AuthServiceImpl implements AuthService {
                     user.getEmail(),
                     EmailTemplate.PASSWORD_CHANGED,
                     Map.of(
-                            "userName", getDisplayName(user),
+                            "userName", user.getDisplayName(),
                             "email", user.getEmail()
                     )
             );
@@ -230,37 +321,43 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
-    private String cleanToken(String token) {
-        if (token == null || token.isEmpty()) {
-            throw new UnauthorizedException("Token is missing");
-        }
-        token = token.trim();
-        if (token.startsWith("Bearer ")) {
-            return token.substring(7);
-        }
-        return token;
-    }
+    private AuthResponse refreshSelfToken(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.validateActiveToken(request.getRefreshToken());
 
-    private User findUserWithEmail(String username) {
-        return userRepository.findByEmail(username)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-    }
+        User user = userRepository.findById(refreshToken.getUserId())
+                .filter(u -> !Boolean.TRUE.equals(u.getDeleted()))
+                .orElseThrow(() -> new UnauthorizedException("Invalid refresh token"));
 
-    private AuthResponse generateAuthResponse(UserPrincipal user) {
+        validateUserCanLogin(user);
 
-        String accessToken = jwtTokenProvider.generateToken(user, !IS_REFRESH_TOKEN);
-        String refreshToken = jwtTokenProvider.generateToken(user, IS_REFRESH_TOKEN);
+        refreshToken.setRevoked(true);
 
-        String roles = user.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
+        String accessToken = jwtTokenProvider.generateAccessToken(user);
+        IssuedRefreshToken newRefreshToken = refreshTokenService.issue(user.getId());
+
+        auditLogService.save(
+                AuditLogCommand.builder()
+                        .actorUserId(user.getId())
+                        .actorUsername(user.getUsername())
+                        .actorEmail(user.getEmail())
+                        .identityProvider("SELF")
+                        .action(AuditAction.AUTH_REFRESH_TOKEN)
+                        .resourceType(AuditResourceType.AUTH)
+                        .result(AuditResult.SUCCESS)
+                        .message("Refresh token")
+                        .httpMethod(auditRequestInfoProvider.method())
+                        .requestPath(auditRequestInfoProvider.path())
+                        .ipAddress(auditRequestInfoProvider.ipAddress())
+                        .userAgent(auditRequestInfoProvider.userAgent())
+                        .requestId(auditRequestInfoProvider.requestId())
+                        .build()
+        );
 
         return AuthResponse.builder()
-                .email(user.getEmail())
                 .accessToken(accessToken)
-                .role(roles)
-                .refreshToken(refreshToken)
+                .refreshToken(newRefreshToken.rawToken())
                 .tokenType("Bearer")
+                .refreshTokenExpiresAt(newRefreshToken.expiresAt())
                 .build();
     }
 }

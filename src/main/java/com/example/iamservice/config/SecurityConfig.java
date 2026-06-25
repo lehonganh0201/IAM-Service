@@ -2,12 +2,13 @@ package com.example.iamservice.config;
 
 import com.example.iamservice.security.jwt.JwtAccessDeniedHandler;
 import com.example.iamservice.security.jwt.JwtAuthenticationEntryPoint;
-import com.example.iamservice.security.jwt.JwtAuthenticationFilter;
+import com.example.iamservice.filter.JwtAuthenticationFilter;
+import com.example.iamservice.security.keycloak.KeycloakJwtAuthenticationConverter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -31,17 +32,13 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(
-        prePostEnabled = true,
-        securedEnabled = true,
-        jsr250Enabled = true
-)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter;
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/**",
@@ -52,26 +49,49 @@ public class SecurityConfig {
     };
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfiguration()))
+    @ConditionalOnProperty(
+            name = "app.identity-provider.type",
+            havingValue = "SELF",
+            matchIfMissing = true
+    )
+    public SecurityFilterChain selfSecurityFilterChain(HttpSecurity http) throws Exception {
+        return baseHttpSecurity(http)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(
+            name = "app.identity-provider.type",
+            havingValue = "KEYCLOAK"
+    )
+    public SecurityFilterChain keycloakSecurityFilterChain(HttpSecurity http) throws Exception {
+        return baseHttpSecurity(http)
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter))
+                )
+                .build();
+    }
+
+    private HttpSecurity baseHttpSecurity(HttpSecurity http) throws Exception {
+        return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
-                        .requestMatchers("/api/v1/roles").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(jwtAccessDeniedHandler)
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
 
-        return http.build();
+                        .anyRequest().authenticated()
+                );
     }
 
     private CorsConfigurationSource corsConfiguration() {

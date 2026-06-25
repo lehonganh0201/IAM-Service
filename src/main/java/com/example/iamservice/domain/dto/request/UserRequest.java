@@ -25,6 +25,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserRequest {
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 100, message = "Username must be between 3 and 100 characters")
+    private String username;
+
     @NotNull(message = "First name is required")
     @NotBlank(message = "First name is required")
     private String firstName;
@@ -42,8 +46,4 @@ public class UserRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
     private String password;
-
-    private String phoneNumber;
-
-    private LocalDate dateOfBirth;
 }

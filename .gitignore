@@ -34,3 +34,6 @@ build/
 
 .env
 docker.env
+
+logs/
+*.log

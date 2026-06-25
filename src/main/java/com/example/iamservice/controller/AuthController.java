@@ -4,21 +4,16 @@ import com.example.iamservice.aop.annotation.RateLimit;
 import com.example.iamservice.base.RestApiV1;
 import com.example.iamservice.base.RestData;
 import com.example.iamservice.base.VsResponseUtil;
-import com.example.iamservice.domain.dto.request.AuthRequest;
-import com.example.iamservice.domain.dto.request.ForgotPasswordRequest;
-import com.example.iamservice.domain.dto.request.ResetPasswordRequest;
-import com.example.iamservice.domain.dto.request.VerifyEmailRequest;
+import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
+import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;
+import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.service.AuthService;
 import com.example.iamservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -37,6 +32,12 @@ public class AuthController {
     private final AuthService authService;
     private final UserService userService;
 
+    @PostMapping("/auth/register")
+    public ResponseEntity<RestData<UserResponse>> register(@RequestBody @Valid UserRequest request) {
+        return VsResponseUtil.success(userService.register(request), "Register success", CREATED);
+    }
+
+
     @RateLimit(
             key = "login",
             capacity = 5,
@@ -49,6 +50,11 @@ public class AuthController {
         return VsResponseUtil.success(authService.login(request), "Login success", OK);
     }
 
+    @GetMapping("/auth/login")
+    public ResponseEntity<RestData<KeycloakLoginResponse>> getLoginUrl(@RequestParam(name = "provider", required = false) String provider) {
+        return VsResponseUtil.success(authService.getLoginUrl(provider), "Login success", OK);
+    }
+
     @RateLimit(
             key = "refresh-token",
             capacity = 10,
@@ -57,8 +63,8 @@ public class AuthController {
             strategy = "USER"
     )
     @PostMapping("/auth/refresh")
-    public ResponseEntity<RestData<AuthResponse>> refreshToken(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
-        return VsResponseUtil.success(authService.refreshToken(token), "Refresh token success", OK);
+    public ResponseEntity<RestData<AuthResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        return VsResponseUtil.success(authService.refreshToken(request), "Refresh token success", OK);
     }
 
     @RateLimit(
@@ -95,8 +101,8 @@ public class AuthController {
             strategy = "USER"
     )
     @PostMapping("/auth/logout")
-    public ResponseEntity<RestData<Void>> logout(@RequestHeader(name = HttpHeaders.AUTHORIZATION) String token) {
-        authService.logout(token);
+    public ResponseEntity<RestData<Void>> logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(request);
         return VsResponseUtil.success(null, "Logout success", NO_CONTENT);
     }
 
@@ -124,5 +130,12 @@ public class AuthController {
     public ResponseEntity<RestData<Void>> resendVerification(@RequestParam String email) {
         userService.resendVerificationEmail(email);
         return VsResponseUtil.success(null, "Email verify was resend success", OK);
+    }
+
+    @PostMapping("/auth/exchange")
+    public ResponseEntity<RestData<AuthResponse>> exchangeKeycloakCode(
+            @Valid @RequestBody KeycloakCodeExchangeRequest request
+    ) {
+        return VsResponseUtil.success(authService.exchangeKeycloakCode(request), "Exchange keycloak code success", OK);
     }
 }

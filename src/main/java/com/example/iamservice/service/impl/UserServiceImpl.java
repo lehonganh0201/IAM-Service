@@ -1,24 +1,26 @@
 package com.example.iamservice.service.impl;
 
+import com.example.iamservice.config.properties.AppProperties;
+import com.example.iamservice.config.properties.IdentityProviderType;
+import com.example.iamservice.constant.AuditAction;
+import com.example.iamservice.constant.AuditResult;
 import com.example.iamservice.constant.EmailTemplate;
-import com.example.iamservice.domain.dto.request.UpdateUserPasswordRequest;
-import com.example.iamservice.domain.dto.request.UpdateUserRequest;
-import com.example.iamservice.domain.dto.request.UserRequest;
-import com.example.iamservice.domain.dto.request.VerifyEmailRequest;
+import com.example.iamservice.domain.dto.request.*;
+import com.example.iamservice.domain.dto.response.KeycloakUserProvisioningResult;
 import com.example.iamservice.domain.dto.response.UserResponse;
-import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
-import com.example.iamservice.domain.mapper.UserMapper;
 import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.exception.ConflictException;
 import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.exception.UnauthorizedException;
-import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
-import com.example.iamservice.security.jwt.JwtTokenProvider;
+import com.example.iamservice.service.AuditLogService;
 import com.example.iamservice.service.EmailService;
 import com.example.iamservice.service.UserService;
+import com.example.iamservice.service.cache.UserProfileCacheService;
+import com.example.iamservice.service.keycloak.KeycloakAdminService;
 import com.example.iamservice.util.CloudinaryUtil;
+import com.example.iamservice.util.CurrentUserProvider;
 import com.example.iamservice.util.RandomUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -27,6 +29,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
@@ -46,20 +49,20 @@ import java.util.Map;
 @Log4j2
 public class UserServiceImpl implements UserService {
 
-    private static final String DEFAULT_ROLE = "USER";
     private static final String EMAIL_VERIFICATION_PREFIX = "email_verify:";
     private static final int VERIFICATION_EXPIRY_HOURS = 24;
     private static final int OTP_EXPIRY_MINUTES = 5;
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
     private final CloudinaryUtil cloudinaryUtil;
-    private final UserMapper userMapper;
     private final EmailService emailService;
     private final StringRedisTemplate redisTemplate;
     private final UserProfileCacheService userProfileCacheService;
+    private final AppProperties appProperties;
+    private final KeycloakAdminService keycloakAdminService;
+    private final AuditLogService auditLogService;
+    private final CurrentUserProvider currentUserProvider;
 
     @Value("${app.domain-url:http://localhost:8080}")
     private String domainUrl;
@@ -67,46 +70,44 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse register(UserRequest request) {
-        checkEmailExists(request.getEmail());
+        if (appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK) {
+            return registerWithKeycloak(request);
+        }
 
-        Role role = getDefaultRole();
-        User user = buildUser(request, role);
-
-        user = userRepository.save(user);
-        log.info("User registered successfully with ID: {} | Email: {}", user.getId(), user.getEmail());
-
-        sendRegistrationConfirmationEmail(user);
-
-        return buildUserResponse(user);
+        return registerWithSelfIdp(request);
     }
 
     @Override
-    public UserResponse getMe(String token) {
-        String email = extractEmailFromToken(token);
-        return userProfileCacheService.getUserProfileByEmail(email);
+    public UserResponse getMe() {
+        String username = currentUserProvider.getCurrentUsername();
+        return userProfileCacheService.getUserProfileByEmail(username);
     }
 
     @Override
     @Transactional
-    public UserResponse updateUser(String token, UpdateUserRequest request) {
-        String email = extractEmailFromToken(token);
-        return updateUserByEmail(email, request);
+    public UserResponse updateUser(UpdateUserRequest request) {
+        String username = currentUserProvider.getCurrentUsername();
+        return updateUserByEmail(username, request);
     }
 
     @Override
     @Transactional
-    public UserResponse updateUserPassword(String token, UpdateUserPasswordRequest request) {
-        String email = extractEmailFromToken(token);
-        User currentUser = findUserByEmail(email);
+    public UserResponse updateUserPassword(UpdateUserPasswordRequest request) {
+        String username = currentUserProvider.getCurrentUsername();
+        User currentUser = findUserByUsername(username);
 
         validatePasswordChange(request, currentUser);
 
-        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        currentUser.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         currentUser = userRepository.save(currentUser);
+
+        if (isKeycloakMode() && StringUtils.hasText(currentUser.getKeycloakUserId())) {
+            updatePasswordInKeycloak(currentUser.getKeycloakUserId(), request.getNewPassword());
+        }
 
         sendPasswordChangedNotification(currentUser);
 
-        log.info("Password updated successfully for user: {}", email);
+        log.info("Password updated successfully for user: {}", username);
         return buildUserResponse(currentUser);
     }
 
@@ -123,12 +124,12 @@ public class UserServiceImpl implements UserService {
 
         User user = findUserById(Long.parseLong(userIdStr));
 
-        if (user.isEmailVerified()) {
+        if (user.getEnabled()) {
             log.info("Email already verified for user: {}", user.getEmail());
             return;
         }
 
-        user.setEmailVerified(true);
+        user.setEnabled(true);
         userRepository.save(user);
 
         log.info("Email verified successfully for user: {}", user.getEmail());
@@ -138,8 +139,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void resendVerificationEmail(String email) {
-        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
-            if (user.isEmailVerified()) {
+        userRepository.findByEmailAndDeletedFalse(email.toLowerCase().trim()).ifPresent(user -> {
+            if (user.getEnabled()) {
                 throw new BadRequestException("Email đã được xác thực trước đó");
             }
 
@@ -156,10 +157,23 @@ public class UserServiceImpl implements UserService {
         });
     }
 
-    public UserResponse updateUserByEmail(String email, UpdateUserRequest request) {
-        User currentUser = findUserByEmail(email);
+    private void updatePasswordInKeycloak(String keycloakUserId, String newPassword) {
+        try {
+            keycloakAdminService.resetPassword(keycloakUserId, newPassword, false);
+        } catch (Exception e) {
+            log.error("Failed to update password in Keycloak for userId: {}", keycloakUserId, e);
+            throw new BadRequestException("Không thể cập nhật mật khẩu. Vui lòng thử lại sau.");
+        }
+    }
 
-        userMapper.updateUser(request, currentUser);
+    private boolean isKeycloakMode() {
+        return appProperties.getIdentityProvider().getType() == IdentityProviderType.KEYCLOAK;
+    }
+
+    private UserResponse updateUserByEmail(String email, UpdateUserRequest request) {
+        User currentUser = findUserByUsername(email);
+
+        updateUser(request, currentUser);
         uploadAvatarIfPresent(currentUser, request.getAvatar());
 
         currentUser = userRepository.save(currentUser);
@@ -171,7 +185,26 @@ public class UserServiceImpl implements UserService {
         return buildUserResponse(currentUser);
     }
 
-    private void sendRegistrationConfirmationEmail(User user) {
+    private void updateUser(UpdateUserRequest request, User user) {
+        if ( request == null ) {
+            return;
+        }
+
+        if ( request.getFirstName() != null ) {
+            user.setFirstName( request.getFirstName() );
+        }
+        if ( request.getLastName() != null ) {
+            user.setLastName( request.getLastName() );
+        }
+        if ( request.getPhoneNumber() != null ) {
+            user.setPhoneNumber( request.getPhoneNumber() );
+        }
+        if ( request.getDateOfBirth() != null ) {
+            user.setDateOfBirth( request.getDateOfBirth() );
+        }
+    }
+
+    /*private void sendRegistrationConfirmationEmail(User user) {
         String verificationToken = RandomUtil.randomResetToken();
         String redisKey = EMAIL_VERIFICATION_PREFIX + verificationToken;
 
@@ -181,7 +214,7 @@ public class UserServiceImpl implements UserService {
         String confirmationLink = buildVerifyUrl(verificationToken);
 
         sendVerificationEmail(user, confirmationLink);
-    }
+    }*/
 
     private String buildVerifyUrl(String verificationToken) {
         return domainUrl + "/verify-email?token=" + verificationToken;
@@ -235,54 +268,14 @@ public class UserServiceImpl implements UserService {
     }
 
     private String getDisplayName(User user) {
-        if (user.getFullName() != null && !user.getFullName().trim().isEmpty()) {
-            return user.getFullName();
+        if (user.getDisplayName() != null && !user.getDisplayName().trim().isEmpty()) {
+            return user.getDisplayName();
         }
         return user.getEmail();
     }
 
-    private void checkEmailExists(String email) {
-        if (userRepository.existsByEmail(email.trim().toLowerCase())) {
-            throw new ConflictException("Email already exists");
-        }
-    }
-
-    private Role getDefaultRole() {
-        return roleRepository.findByName(DEFAULT_ROLE)
-                .orElseThrow(() -> new NotFoundException("Default role 'USER' not found"));
-    }
-
-    private User buildUser(UserRequest request, Role role) {
-        return User.builder()
-                .email(request.getEmail().trim().toLowerCase())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .roleId(role.getId())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .dateOfBirth(request.getDateOfBirth())
-                .phoneNumber(request.getPhoneNumber())
-                .emailVerified(false)
-                .build();
-    }
-
-    private String extractEmailFromToken(String token) {
-        String cleanedToken = cleanToken(token);
-        if (jwtTokenProvider.validateToken(cleanedToken) && !jwtTokenProvider.isRefreshToken(cleanedToken)) {
-            return jwtTokenProvider.extractUsername(cleanedToken);
-        }
-        throw new UnauthorizedException("Token is not valid");
-    }
-
-    private String cleanToken(String token) {
-        if (token == null || token.isBlank()) {
-            throw new UnauthorizedException("Token is missing");
-        }
-        token = token.trim();
-        return token.startsWith("Bearer ") ? token.substring(7) : token;
-    }
-
-    private User findUserByEmail(String email) {
-        return userRepository.findByEmail(email)
+    private User findUserByUsername(String username) {
+        return userRepository.findByUsernameAndDeletedFalse(username)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
@@ -293,7 +286,7 @@ public class UserServiceImpl implements UserService {
 
     private UserResponse buildUserResponse(User user) {
         return UserResponse.builder()
-                .fullName(user.getFullName())
+                .fullName(user.getDisplayName())
                 .dateOfBirth(user.getDateOfBirth())
                 .phoneNumber(user.getPhoneNumber())
                 .email(user.getEmail())
@@ -302,10 +295,10 @@ public class UserServiceImpl implements UserService {
     }
 
     private void validatePasswordChange(UpdateUserPasswordRequest request, User currentUser) {
-        if (!passwordEncoder.matches(request.getOldPassword(), currentUser.getPassword())) {
+        if (!passwordEncoder.matches(request.getOldPassword(), currentUser.getPasswordHash())) {
             throw new BadRequestException("Old password does not match");
         }
-        if (passwordEncoder.matches(request.getNewPassword(), currentUser.getPassword())) {
+        if (passwordEncoder.matches(request.getNewPassword(), currentUser.getPasswordHash())) {
             throw new BadRequestException("New password must be different from current password");
         }
     }
@@ -315,5 +308,125 @@ public class UserServiceImpl implements UserService {
             String avatarUrl = cloudinaryUtil.uploadFile(avatar);
             user.setAvatarUrl(avatarUrl);
         }
+    }
+
+    private UserResponse registerWithKeycloak(UserRequest request) {
+        validateUniqueUser(request.getUsername(), request.getEmail());
+
+        KeycloakUserProvisioningResult provisionedUser = null;
+
+        try {
+            provisionedUser = keycloakAdminService.createUser(
+                    new KeycloakRegisterRequest(
+                            request.getUsername(),
+                            request.getEmail(),
+                            request.getFirstName(),
+                            request.getLastName(),
+                            request.getPassword()
+                    )
+            );
+
+            User user = User.builder()
+                    .keycloakUserId(provisionedUser.keycloakUserId())
+                    .username(request.getUsername())
+                    .email(request.getEmail())
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .passwordHash(null)
+                    .passwordHash(null)
+                    .enabled(true)
+                    .locked(false)
+                    .build();
+
+            User savedUser = userRepository.save(user);
+
+            auditLogSuccess(AuditAction.AUTH_REGISTER, savedUser.getUsername(), savedUser.getId());
+
+            return mapToResponse(savedUser);
+
+        } catch (Exception exception) {
+            if (provisionedUser != null && provisionedUser.keycloakUserId() != null) {
+                rollbackCreatedKeycloakUser(provisionedUser.keycloakUserId());
+            }
+
+            throw exception;
+        }
+    }
+
+    private void rollbackCreatedKeycloakUser(String keycloakUserId) {
+        try {
+            keycloakAdminService.disableUser(keycloakUserId);
+        } catch (Exception ignored) {
+            log.warn("Register user with keycloak fail with id {}", keycloakUserId);
+        }
+    }
+
+    private UserResponse registerWithSelfIdp(UserRequest request) {
+        validateUniqueUser(request.getUsername(), request.getEmail());
+
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .passwordHash(encodedPassword)
+                .passwordHash(encodedPassword)
+                .enabled(true)
+                .locked(false)
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        auditLogSuccess(AuditAction.AUTH_REGISTER, savedUser.getUsername(), savedUser.getId());
+
+        return mapToResponse(savedUser);
+    }
+
+    private UserResponse mapToResponse(User savedUser) {
+        return UserResponse.builder()
+                .fullName(savedUser.getDisplayName())
+                .email(savedUser.getEmail())
+                .phoneNumber(savedUser.getPhoneNumber())
+                .dateOfBirth(savedUser.getDateOfBirth())
+                .avatarUrl(savedUser.getAvatarUrl())
+                .username(savedUser.getUsername())
+                .userId(savedUser.getId())
+                .userKeycloakId(savedUser.getKeycloakUserId())
+                .isActive(savedUser.isActive())
+                .build();
+    }
+
+    private void validateUniqueUser(String username, String email) {
+        if (userRepository.existsByUsernameAndDeletedFalse(username)) {
+            auditLogFailure(AuditAction.AUTH_REGISTER, username, "Username already exists");
+            throw new ConflictException("Username already exists");
+        }
+
+        if (userRepository.existsByEmailAndDeletedFalse(email)) {
+            auditLogFailure(AuditAction.AUTH_REGISTER, email, "Email already exists");
+            throw new ConflictException("Email already exists");
+        }
+    }
+
+    private void auditLogFailure(AuditAction action, String usernameOrEmail, String errorMessage) {
+        auditLogService.saveAuthAudit(
+                action,
+                AuditResult.FAILURE,
+                usernameOrEmail,
+                null,
+                errorMessage
+        );
+    }
+
+    private void auditLogSuccess(AuditAction action, String usernameOrEmail, Long userId) {
+        auditLogService.saveAuthAudit(
+                action,
+                AuditResult.SUCCESS,
+                usernameOrEmail,
+                userId,
+                null
+        );
     }
 }

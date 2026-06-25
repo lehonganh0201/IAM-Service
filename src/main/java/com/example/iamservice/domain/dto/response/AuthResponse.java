@@ -2,6 +2,8 @@ package com.example.iamservice.domain.dto.response;
 
 import lombok.*;
 
+import java.time.Instant;
+
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
@@ -11,15 +13,11 @@ import lombok.*;
  * ----------------------------------------------------------------------------
  */
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class AuthResponse {
-    private String email;
-    private String accessToken;
-    private String refreshToken;
-    private String role;
-    private String tokenType = "Bearer";
+public record AuthResponse(
+        String accessToken,
+        String refreshToken,
+        String tokenType,
+        Instant refreshTokenExpiresAt
+) {
 }
