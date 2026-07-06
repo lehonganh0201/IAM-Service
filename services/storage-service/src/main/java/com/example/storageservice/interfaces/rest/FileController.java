@@ -7,10 +7,12 @@ import com.example.commonlib.api.common.PageResponse;
 import com.example.commonlib.api.common.PageableFactory;
 import com.example.commonlib.security.SecurityUtils;
 import com.example.storageservice.application.dto.request.FileSearchQuery;
+import com.example.storageservice.application.dto.request.FileUpdateRequest;
 import com.example.storageservice.application.dto.response.FileMetaDataResponse;
 import com.example.storageservice.application.usecase.FileUseCases;
 import com.example.storageservice.domain.model.FileVisibility;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
@@ -148,5 +150,22 @@ public class FileController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(r.contentType()))
                 .body(r.resource());
+    }
+
+    @PatchMapping({"/api/v1/public/files/{id}", "/api/v1/private/files/{id}"})
+    public ResponseEntity<ApiResponse<FileMetaDataResponse>> patch(@PathVariable UUID id, @Valid @RequestBody FileUpdateRequest req) {
+        return ResponseEntity.ok(
+                responseFactory.success("Updated successfully",
+                        useCases.update(id, req, SecurityUtils.currentUser()))
+        );
+    }
+
+    @PutMapping(value = {"/api/v1/public/files/{id}/content", "/api/v1/private/files/{id}/content"}, consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<FileMetaDataResponse>> replace(@PathVariable UUID id, @RequestPart MultipartFile file) {
+        return ResponseEntity.ok(
+                responseFactory.success("Content replaced successfully",
+                        useCases.replaceContent(id, file, SecurityUtils.currentUser())
+                )
+        );
     }
 }
