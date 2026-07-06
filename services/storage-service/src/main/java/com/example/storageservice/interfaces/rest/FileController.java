@@ -168,4 +168,13 @@ public class FileController {
                 )
         );
     }
+
+    @DeleteMapping({"/api/v1/public/files/{id}", "/api/v1/private/files/{id}"})
+    public ResponseEntity<ApiResponse<Void>> del(@PathVariable UUID id) {
+        useCases.delete(id, SecurityUtils.currentUser());
+        return ResponseEntity.ok(
+                responseFactory.success("Deleted successfully",
+                null)
+        );
+    }
 }
