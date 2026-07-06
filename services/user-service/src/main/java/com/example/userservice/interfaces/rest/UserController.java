@@ -7,6 +7,7 @@ import com.example.commonlib.api.common.PageResponse;
 import com.example.userservice.application.dto.request.UpdateUserRequest;
 import com.example.userservice.application.dto.request.UserSearchQuery;
 import com.example.userservice.application.dto.request.CreateUserRequest;
+import com.example.userservice.application.dto.response.ImportResultResponse;
 import com.example.userservice.application.dto.response.UserResponse;
 import com.example.userservice.application.usecase.AvatarUseCase;
 import com.example.userservice.application.usecase.UserUseCases;
@@ -106,7 +107,7 @@ public class UserController {
         );
     }
 
-    @DeleteMapping("/{id}/avatar")
+    @DeleteMapping("/users/{id}/avatar")
     @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     public ResponseEntity<ApiResponse<UserResponse>> deleteAvatar(@PathVariable UUID id) {
         return ResponseEntity.ok(
@@ -116,14 +117,25 @@ public class UserController {
         );
     }
 
-    @GetMapping("/import/template")
+    @GetMapping("/users/import/template")
     @PreAuthorize("hasAnyAuthority('iam:user:import','ROLE_admin')")
     public ResponseEntity<Resource> template() {
         byte[] b = importUseCase.template();
         return ResponseEntity.ok().contentType(
-                MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                        MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment().filename("user-import-template.xlsx")
                                 .build().toString()).contentLength(b.length).body(new ByteArrayResource(b));
+    }
+
+    @PostMapping(value = "/users/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('iam:user:import','ROLE_admin')")
+    public ResponseEntity<ApiResponse<ImportResultResponse>> importUsers(@RequestPart MultipartFile file,
+                                                                         @RequestParam(defaultValue = "true") boolean dryRun) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Import processed",
+                        importUseCase.importUsers(file, dryRun))
+        );
     }
 }
