@@ -3,15 +3,19 @@ package com.example.userservice.interfaces.rest;
 import com.example.commonlib.api.RestApiV1;
 import com.example.commonlib.api.common.ApiResponse;
 import com.example.commonlib.api.common.ApiResponseFactory;
+import com.example.commonlib.api.common.PageResponse;
+import com.example.userservice.application.dto.request.UserSearchQuery;
 import com.example.userservice.application.dto.request.CreateUserRequest;
 import com.example.userservice.application.dto.response.UserResponse;
 import com.example.userservice.application.usecase.UserUseCases;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 /**
  * ----------------------------------------------------------------------------
@@ -31,6 +35,30 @@ public class UserController {
     @PostMapping("/users")
     @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     public ResponseEntity<ApiResponse<UserResponse>> create(@Valid @RequestBody CreateUserRequest r) {
-        return ResponseEntity.ok(responseFactory.success("Created successfully", useCases.create(r)));
+        return ResponseEntity.ok(
+                responseFactory.success("Created successfully", useCases.create(r)));
     }
+
+    @GetMapping("/users/{id}")
+    public ResponseEntity<ApiResponse<UserResponse>> get(@PathVariable UUID id) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Get user successfully",
+                        useCases.get(id)));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> list(@RequestParam(required = false) String keyword,
+                                                                        @RequestParam(required = false) String province,
+                                                                        @RequestParam(required = false) Double minYears,
+                                                                        @RequestParam(required = false) Double maxYears,
+                                                                        Pageable pageable) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Get user list successfully",
+                        useCases.search(new UserSearchQuery(keyword, province, minYears, maxYears), pageable)
+                )
+        );
+    }
+
 }

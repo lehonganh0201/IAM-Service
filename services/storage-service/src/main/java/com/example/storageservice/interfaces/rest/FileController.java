@@ -43,7 +43,6 @@ import java.util.UUID;
 public class FileController {
     private final FileUseCases useCases;
     private final ApiResponseFactory responseFactory;
-    private final PageableFactory pageableFactory;
 
     @PostMapping(value = "/public/files", consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")
@@ -112,7 +111,7 @@ public class FileController {
         );
     }
 
-    @GetMapping({"/api/v1/public/files", "/api/v1/private/files"})
+    @GetMapping({"/public/files", "/private/files"})
     public ResponseEntity<ApiResponse<PageResponse<FileMetaDataResponse>>> list(HttpServletRequest request,
                                                                                 @RequestParam(required = false) String keyword,
                                                                                 @RequestParam(required = false) String contentType,
@@ -136,7 +135,7 @@ public class FileController {
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(r.contentType())).contentLength(r.contentLength()).header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(r.filename()).build().toString()).body(r.resource());
     }
 
-    @GetMapping({"/api/v1/public/files/{id}", "/api/v1/private/files/{id}"})
+    @GetMapping({"/public/files/{id}", "/private/files/{id}"})
     public ResponseEntity<ApiResponse<FileMetaDataResponse>> get(@PathVariable UUID id) {
         return ResponseEntity.ok(
                 responseFactory.success(
@@ -144,7 +143,7 @@ public class FileController {
                         useCases.get(id, SecurityUtils.currentUser())));
     }
 
-    @GetMapping({"/api/v1/public/files/{id}/view", "/api/v1/private/files/{id}/view"})
+    @GetMapping({"/public/files/{id}/view", "/private/files/{id}/view"})
     public ResponseEntity<Resource> view(@PathVariable UUID id) {
         var r = useCases.download(id, SecurityUtils.currentUser());
         return ResponseEntity.ok()
@@ -152,7 +151,7 @@ public class FileController {
                 .body(r.resource());
     }
 
-    @PatchMapping({"/api/v1/public/files/{id}", "/api/v1/private/files/{id}"})
+    @PatchMapping({"/public/files/{id}", "/private/files/{id}"})
     public ResponseEntity<ApiResponse<FileMetaDataResponse>> patch(@PathVariable UUID id, @Valid @RequestBody FileUpdateRequest req) {
         return ResponseEntity.ok(
                 responseFactory.success("Updated successfully",
@@ -160,7 +159,7 @@ public class FileController {
         );
     }
 
-    @PutMapping(value = {"/api/v1/public/files/{id}/content", "/api/v1/private/files/{id}/content"}, consumes = "multipart/form-data")
+    @PutMapping(value = {"/public/files/{id}/content", "/private/files/{id}/content"}, consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<FileMetaDataResponse>> replace(@PathVariable UUID id, @RequestPart MultipartFile file) {
         return ResponseEntity.ok(
                 responseFactory.success("Content replaced successfully",
@@ -169,7 +168,7 @@ public class FileController {
         );
     }
 
-    @DeleteMapping({"/api/v1/public/files/{id}", "/api/v1/private/files/{id}"})
+    @DeleteMapping({"/public/files/{id}", "/private/files/{id}"})
     public ResponseEntity<ApiResponse<Void>> del(@PathVariable UUID id) {
         useCases.delete(id, SecurityUtils.currentUser());
         return ResponseEntity.ok(

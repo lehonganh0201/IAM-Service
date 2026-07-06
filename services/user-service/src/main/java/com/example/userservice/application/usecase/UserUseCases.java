@@ -1,15 +1,24 @@
 package com.example.userservice.application.usecase;
 
+import com.example.commonlib.api.common.PageResponse;
 import com.example.commonlib.exception.ConflictException;
+import com.example.commonlib.exception.NotFoundException;
 import com.example.userservice.application.dto.request.CreateUserRequest;
+import com.example.userservice.application.dto.request.UserSearchQuery;
 import com.example.userservice.application.dto.response.UserResponse;
 import com.example.userservice.application.mapper.UserMapper;
 import com.example.userservice.domain.model.UserStatus;
 import com.example.userservice.infrastructure.persistence.UserEntity;
 import com.example.userservice.infrastructure.persistence.UserRepository;
+import com.example.userservice.infrastructure.persistence.UserSpecifications;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 /**
  * ----------------------------------------------------------------------------
@@ -33,5 +42,20 @@ public class UserUseCases {
         UserEntity e = userMapper.toEntity(r);
         e.setStatus(UserStatus.ACTIVE);
         return userMapper.toResponse(userRepository.save(e));
+    }
+
+    public UserResponse get(UUID id) {
+        return userMapper.toResponse(find(id));
+    }
+
+    public PageResponse<UserResponse> search(UserSearchQuery q, Pageable p) {
+        return PageResponse.from(
+                userRepository.findAll(
+                        UserSpecifications.byQuery(q), PageRequest.of(p.getPageNumber(), p.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt")))
+                        .map(userMapper::toResponse));
+    }
+
+    private UserEntity find(UUID id) {
+        return userRepository.findByIdAndStatusNot(id, UserStatus.DELETED).orElseThrow(() -> new NotFoundException("User not found"));
     }
 }
