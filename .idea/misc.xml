@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="FrameworkDetectionExcludesConfiguration">
+    <file type="web" url="file://$PROJECT_DIR$/services/IAMService/common-lib" />
+  </component>
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/IAMService/pom.xml" />
         <option value="$PROJECT_DIR$/storage-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/IAMService/pom.xml" />
+        <option value="$PROJECT_DIR$/services/storage-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/IAMService/common-lib/pom.xml" />
+        <option value="$PROJECT_DIR$/services/common-lib/pom.xml" />
       </list>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="openjdk-24" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="jpab" />
   </component>
 </project>
