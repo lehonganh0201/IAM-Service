@@ -1,0 +1,73 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: iam-service
+
+  datasource:
+    url: ${IAM_DB_URL:jdbc:postgresql://localhost:5433/iam_db}
+    username: ${IAM_DB_USERNAME:iam_user}
+    password: ${IAM_DB_PASSWORD:iam_pass}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:20MB}
+      max-request-size: ${MAX_REQUEST_SIZE:50MB}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/storage-iam-realm}
+
+      client:
+        registration:
+          iam-service-client:
+            provider: keycloak
+            client-id: ${STORAGE_CLIENT_ID:iam-service-client}
+            client-secret: ${STORAGE_CLIENT_SECRET:iam-storage-secret}
+            authorization-grant-type: client_credentials
+
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8080/realms/storage-iam-realm/protocol/openid-connect/token}
+
+app:
+  storage-client:
+    base-url: ${STORAGE_SERVICE_URL:http://localhost:8082}
+    token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8080/realms/storage-iam-realm/protocol/openid-connect/token}
+    client-id: ${STORAGE_CLIENT_ID:iam-service-client}
+    client-secret: ${STORAGE_CLIENT_SECRET:iam-storage-secret}
+    avatar-visibility: ${AVATAR_VISIBILITY:PUBLIC}
+
+resilience4j:
+  retry:
+    instances:
+      storageService:
+        max-attempts: 3
+        wait-duration: 500ms
+
+  circuitbreaker:
+    instances:
+      storageService:
+        failure-rate-threshold: 50
+        sliding-window-size: 10
+        wait-duration-in-open-state: 10s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+springdoc:
+  show-actuator: true
