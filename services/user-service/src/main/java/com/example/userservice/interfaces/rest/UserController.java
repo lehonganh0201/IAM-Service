@@ -99,4 +99,14 @@ public class UserController {
                 )
         );
     }
+
+    @DeleteMapping("/{id}/avatar")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
+    public ResponseEntity<ApiResponse<UserResponse>> deleteAvatar(@PathVariable UUID id) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Avatar deleted",
+                        avatarUseCase.deleteAvatar(id))
+        );
+    }
 }
