@@ -39,4 +39,15 @@ public class AvatarUseCase {
 
         return userMapper.toResponse(userRepository.save(u));
     }
+
+    @Transactional
+    public UserResponse deleteAvatar(UUID id) {
+        var u = users.find(id);
+
+        if (u.getAvatarFileId() != null) storageAdapter.deleteFile(u.getAvatarFileId().toString());
+
+        u.setAvatarFileId(null);
+        u.setUpdatedAt(Instant.now());
+        return userMapper.toResponse(userRepository.save(u));
+    }
 }
