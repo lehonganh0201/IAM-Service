@@ -6,6 +6,7 @@ import com.example.commonlib.exception.ForbiddenException;
 import com.example.commonlib.exception.NotFoundException;
 import com.example.commonlib.security.CurrentUser;
 import com.example.storageservice.application.dto.request.FileSearchQuery;
+import com.example.storageservice.application.dto.request.FileUpdateRequest;
 import com.example.storageservice.application.dto.response.FileMetaDataResponse;
 import com.example.storageservice.application.mapper.FileMetadataMapper;
 import com.example.storageservice.application.service.ChecksumService;
@@ -30,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -98,6 +100,40 @@ public class FileUseCases {
             return strategies.byProvider(f.getStorageProvider()).load(f.getObjectKey(), f.getOriginalName(), f.getContentType());
         } catch (IOException e) {
             throw new BadRequestException("Cannot download file");
+        }
+    }
+
+    @Transactional
+    public FileMetaDataResponse update(UUID id, FileUpdateRequest req, CurrentUser u) {
+        FileMetadataEntity f = find(id);
+        if (!policy.canUpdate(f, u)) throw new ForbiddenException("No update permission");
+        f.setDescription(req.description());
+        f.setTags(req.tags());
+        f.setUpdatedAt(Instant.now());
+        f.setUpdatedBy(u.username());
+        return mapper.toResponse(repo.save(f));
+    }
+
+    @Transactional
+    public FileMetaDataResponse replaceContent(UUID id, MultipartFile file, CurrentUser u) {
+        FileMetadataEntity f = find(id);
+        if (!policy.canUpdate(f, u)) throw new ForbiddenException("No update permission");
+        try {
+            validator.validate(file);
+            byte[] bytes = file.getBytes();
+            StoredObject stored = strategies.byProvider(f.getStorageProvider()).store(names.sanitize(file.getOriginalFilename()), file.getContentType(), new ByteArrayInputStream(bytes), file.getSize());
+            try {
+                strategies.byProvider(f.getStorageProvider()).delete(f.getObjectKey());
+            } catch (IOException ignored) {
+            }
+            setupFileInfo(file, bytes, stored, f);
+            f.setBucketName(stored.bucketName());
+            f.setObjectKey(stored.objectKey());
+            f.setUpdatedAt(Instant.now());
+            f.setUpdatedBy(u.username());
+            return mapper.toResponse(repo.save(f));
+        } catch (IOException ex) {
+            throw new BadRequestException("Cannot replace file content");
         }
     }
 
