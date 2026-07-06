@@ -32,6 +32,15 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<RestData<Object>> handleForbiddenException(ForbiddenException ex) {
+        return VsResponseUtil.error(
+                ex.getMessage(),
+                null,
+                ex.getStatus()
+        );
+    }
+
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<RestData<Object>> handleUnauthorizedException(UnauthorizedException ex) {
         return VsResponseUtil.error(

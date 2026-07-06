@@ -1,0 +1,75 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: storage-service
+
+  datasource:
+    url: ${STORAGE_DB_URL:jdbc:postgresql://localhost:5434/storage_db}
+    username: ${STORAGE_DB_USERNAME:storage_user}
+    password: ${STORAGE_DB_PASSWORD:storage_pass}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:20MB}
+      max-request-size: ${MAX_REQUEST_SIZE:50MB}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/storage-iam-realm}
+
+app:
+  storage:
+    provider: ${STORAGE_PROVIDER:MINIO}
+    max-file-size-bytes: ${APP_MAX_FILE_SIZE_BYTES:20971520}
+
+    allowed-extensions:
+      - jpg
+      - jpeg
+      - png
+      - gif
+      - pdf
+      - xlsx
+      - csv
+      - txt
+      - docx
+
+    allowed-mime-types:
+      - image/jpeg
+      - image/png
+      - image/gif
+      - application/pdf
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      - text/csv
+      - text/plain
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+    allow-anonymous-public-download: ${ALLOW_ANONYMOUS_PUBLIC_DOWNLOAD:false}
+    local-root: ${LOCAL_STORAGE_ROOT:./data/storage}
+    hard-delete: ${HARD_DELETE:false}
+
+    minio:
+      endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+      access-key: ${MINIO_ACCESS_KEY:minioadmin}
+      secret-key: ${MINIO_SECRET_KEY:minioadmin}
+      bucket: ${MINIO_BUCKET:storage-files}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+springdoc:
+  show-actuator: true
