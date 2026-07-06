@@ -12,6 +12,7 @@ import com.example.storageservice.application.mapper.FileMetadataMapper;
 import com.example.storageservice.application.service.ChecksumService;
 import com.example.storageservice.application.service.FileNameFactory;
 import com.example.storageservice.application.service.FileValidationService;
+import com.example.storageservice.config.StorageProperties;
 import com.example.storageservice.domain.model.FileStatus;
 import com.example.storageservice.domain.model.FileVisibility;
 import com.example.storageservice.domain.model.StorageResource;
@@ -53,6 +54,7 @@ public class FileUseCases {
     private final FileValidationService validator;
     private final ChecksumService checksum;
     private final FileMetadataMapper mapper;
+    private final StorageProperties props;
 
     @Transactional
     public FileMetaDataResponse upload(MultipartFile file, FileVisibility visibility, String description, String tags, CurrentUser user) {
@@ -135,6 +137,22 @@ public class FileUseCases {
         } catch (IOException ex) {
             throw new BadRequestException("Cannot replace file content");
         }
+    }
+
+    @Transactional
+    public void delete(UUID id, CurrentUser u) {
+        var f = find(id);
+        if (!policy.canDelete(f, u)) throw new ForbiddenException("No delete permission");
+        f.setStatus(FileStatus.DELETED);
+        f.setDeletedAt(Instant.now());
+        f.setDeletedBy(u.username());
+        repo.save(f);
+        if (props.hardDelete())
+            try {
+                strategies.byProvider(f.getStorageProvider()).delete(f.getObjectKey());
+            } catch (IOException ignored) {
+                throw new BadRequestException("Cannot delete file from storage");
+            }
     }
 
     private void setupFileInfo(MultipartFile file, byte[] bytes, StoredObject stored, FileMetadataEntity e) {
