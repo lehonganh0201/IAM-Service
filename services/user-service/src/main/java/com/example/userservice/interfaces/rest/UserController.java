@@ -72,4 +72,14 @@ public class UserController {
                 )
         );
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+        useCases.delete(id);
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Deleted successfully", null)
+        );
+    }
 }
