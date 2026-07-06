@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cập nhật thông tin cá nhân</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 30px; text-align: center; }
+    .content { padding: 40px 30px; line-height: 1.6; color: #333; }
+    .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Thông tin tài khoản đã được cập nhật</h1>
+  </div>
+  <div class="content">
+    <p>Xin chào <strong th:text="${userName}"></strong>,</p>
+    <p>Thông tin cá nhân của tài khoản bạn vừa được cập nhật thành công vào lúc <strong th:text="${updatedAt}"></strong>.</p>
+    <p>Nếu bạn không thực hiện thay đổi này, vui lòng kiểm tra ngay tài khoản của mình.</p>
+  </div>
+  <div class="footer">
+    <p>© 2026 IAM Service. All rights reserved.</p>
+    <p>Đây là email tự động, vui lòng không trả lời.</p>
+  </div>
+</div>
+</body>
+</html>
