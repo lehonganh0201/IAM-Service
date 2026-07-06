@@ -73,6 +73,14 @@ public class UserUseCases {
         return userMapper.toResponse(userRepository.save(e));
     }
 
+    @Transactional
+    public void delete(UUID id) {
+        var e = find(id);
+        e.setStatus(UserStatus.DELETED);
+        e.setUpdatedAt(Instant.now());
+        userRepository.save(e);
+    }
+
     private UserEntity find(UUID id) {
         return userRepository.findByIdAndStatusNot(id, UserStatus.DELETED).orElseThrow(() -> new NotFoundException("User not found"));
     }
