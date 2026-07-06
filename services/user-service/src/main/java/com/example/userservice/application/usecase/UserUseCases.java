@@ -4,6 +4,7 @@ import com.example.commonlib.api.common.PageResponse;
 import com.example.commonlib.exception.ConflictException;
 import com.example.commonlib.exception.NotFoundException;
 import com.example.userservice.application.dto.request.CreateUserRequest;
+import com.example.userservice.application.dto.request.UpdateUserRequest;
 import com.example.userservice.application.dto.request.UserSearchQuery;
 import com.example.userservice.application.dto.response.UserResponse;
 import com.example.userservice.application.mapper.UserMapper;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -51,8 +53,24 @@ public class UserUseCases {
     public PageResponse<UserResponse> search(UserSearchQuery q, Pageable p) {
         return PageResponse.from(
                 userRepository.findAll(
-                        UserSpecifications.byQuery(q), PageRequest.of(p.getPageNumber(), p.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt")))
+                                UserSpecifications.byQuery(q), PageRequest.of(p.getPageNumber(), p.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt")))
                         .map(userMapper::toResponse));
+    }
+
+    @Transactional
+    public UserResponse update(UUID id, UpdateUserRequest r) {
+        var e = find(id);
+
+        if (r.fullName() != null) e.setFullName(r.fullName());
+        if (r.dateOfBirth() != null) e.setDateOfBirth(r.dateOfBirth());
+        if (r.street() != null) e.setStreet(r.street());
+        if (r.ward() != null) e.setWard(r.ward());
+        if (r.district() != null) e.setDistrict(r.district());
+        if (r.province() != null) e.setProvince(r.province());
+        if (r.yearsOfExperience() != null) e.setYearsOfExperience(r.yearsOfExperience());
+        e.setUpdatedAt(Instant.now());
+
+        return userMapper.toResponse(userRepository.save(e));
     }
 
     private UserEntity find(UUID id) {

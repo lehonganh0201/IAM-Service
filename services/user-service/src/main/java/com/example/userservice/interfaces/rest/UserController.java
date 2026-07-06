@@ -4,6 +4,7 @@ import com.example.commonlib.api.RestApiV1;
 import com.example.commonlib.api.common.ApiResponse;
 import com.example.commonlib.api.common.ApiResponseFactory;
 import com.example.commonlib.api.common.PageResponse;
+import com.example.userservice.application.dto.request.UpdateUserRequest;
 import com.example.userservice.application.dto.request.UserSearchQuery;
 import com.example.userservice.application.dto.request.CreateUserRequest;
 import com.example.userservice.application.dto.response.UserResponse;
@@ -61,4 +62,14 @@ public class UserController {
         );
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
+    public ResponseEntity<ApiResponse<UserResponse>> update(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest r) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Updated successfully",
+                        useCases.update(id, r)
+                )
+        );
+    }
 }
