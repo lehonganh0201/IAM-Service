@@ -1,14 +1,14 @@
 package com.example.iamservice.service.impl;
 
-import com.example.iamservice.domain.dto.response.common.PageResponse;
+import com.example.commonlib.api.common.PageResponse;
+import com.example.commonlib.exception.BadRequestException;
+import com.example.commonlib.exception.ConflictException;
+import com.example.commonlib.exception.NotFoundException;
 import com.example.iamservice.domain.dto.request.CreatePermissionRequest;
 import com.example.iamservice.domain.dto.request.UpdatePermissionRequest;
 import com.example.iamservice.domain.dto.response.PermissionResponse;
 import com.example.iamservice.domain.entity.Permission;
 import com.example.iamservice.domain.mapper.PermissionMapper;
-import com.example.iamservice.exception.BadRequestException;
-import com.example.iamservice.exception.ConflictException;
-import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.PermissionRepository;
 import com.example.iamservice.repository.specification.PermissionSpecification;
 import com.example.iamservice.service.PermissionManagementService;

@@ -1,6 +1,6 @@
 package com.example.iamservice.constant;
 
-import com.example.iamservice.exception.NotFoundException;
+import com.example.commonlib.exception.NotFoundException;
 import lombok.Getter;
 
 /**

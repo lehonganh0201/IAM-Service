@@ -1,6 +1,6 @@
 package com.example.iamservice.util;
 
-import com.example.iamservice.context.RequestContext;
+import com.example.commonlib.web.context.RequestContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;

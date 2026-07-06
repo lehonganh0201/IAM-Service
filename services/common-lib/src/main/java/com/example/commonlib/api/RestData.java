@@ -1,4 +1,4 @@
-package com.example.iamservice.base;
+package com.example.commonlib.api;
 
 import lombok.*;
 

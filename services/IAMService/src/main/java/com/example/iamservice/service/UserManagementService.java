@@ -1,11 +1,11 @@
 package com.example.iamservice.service;
 
+import com.example.commonlib.api.common.PageResponse;
 import com.example.iamservice.domain.dto.request.AssignUserRolesRequest;
 import com.example.iamservice.domain.dto.request.CreateUserRequest;
 import com.example.iamservice.domain.dto.request.ResetUserPasswordRequest;
 import com.example.iamservice.domain.dto.request.UpdateUserRequest;
 import com.example.iamservice.domain.dto.response.UserResponse;
-import com.example.iamservice.domain.dto.response.common.PageResponse;
 import org.springframework.data.domain.Pageable;
 
 /**

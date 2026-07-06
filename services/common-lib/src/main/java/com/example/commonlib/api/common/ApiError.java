@@ -1,4 +1,4 @@
-package com.example.iamservice.domain.dto.response.common;
+package com.example.commonlib.api.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

@@ -1,5 +1,8 @@
 package com.example.iamservice.service.impl;
 
+import com.example.commonlib.exception.BadRequestException;
+import com.example.commonlib.exception.NotFoundException;
+import com.example.commonlib.exception.UnauthorizedException;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.config.properties.IdentityProviderType;
 import com.example.iamservice.constant.AuditAction;
@@ -13,9 +16,6 @@ import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;
 import com.example.iamservice.domain.dto.response.KeycloakTokenResponse;
 import com.example.iamservice.domain.entity.RefreshToken;
 import com.example.iamservice.domain.entity.User;
-import com.example.iamservice.exception.BadRequestException;
-import com.example.iamservice.exception.NotFoundException;
-import com.example.iamservice.exception.UnauthorizedException;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.security.jwt.JwtTokenProvider;
 import com.example.iamservice.service.AuditLogService;

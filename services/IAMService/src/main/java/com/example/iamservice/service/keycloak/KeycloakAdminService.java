@@ -1,9 +1,9 @@
 package com.example.iamservice.service.keycloak;
 
+import com.example.commonlib.exception.BadRequestException;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.dto.request.KeycloakRegisterRequest;
 import com.example.iamservice.domain.dto.response.KeycloakUserProvisioningResult;
-import com.example.iamservice.exception.BadRequestException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.admin.client.Keycloak;

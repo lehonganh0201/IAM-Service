@@ -1,4 +1,4 @@
-package com.example.iamservice.base;
+package com.example.commonlib.api;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

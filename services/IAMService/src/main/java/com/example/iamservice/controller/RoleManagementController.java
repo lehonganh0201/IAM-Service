@@ -1,5 +1,9 @@
 package com.example.iamservice.controller;
 
+import com.example.commonlib.api.common.ApiResponse;
+import com.example.commonlib.api.common.ApiResponseFactory;
+import com.example.commonlib.api.common.PageResponse;
+import com.example.commonlib.api.common.PageableFactory;
 import com.example.iamservice.aop.annotation.AuditActivity;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;
@@ -8,10 +12,6 @@ import com.example.iamservice.domain.dto.request.CreateRoleRequest;
 import com.example.iamservice.domain.dto.request.DeleteReasonRequest;
 import com.example.iamservice.domain.dto.request.UpdateRoleRequest;
 import com.example.iamservice.domain.dto.response.RoleResponse;
-import com.example.iamservice.domain.dto.response.common.ApiResponse;
-import com.example.iamservice.domain.dto.response.common.ApiResponseFactory;
-import com.example.iamservice.domain.dto.response.common.PageResponse;
-import com.example.iamservice.domain.dto.response.common.PageableFactory;
 import com.example.iamservice.service.RoleManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

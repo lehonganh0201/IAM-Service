@@ -2,7 +2,7 @@ package com.example.iamservice.util;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.example.iamservice.exception.UploadFileException;
+import com.example.commonlib.exception.UploadFileException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;

@@ -1,8 +1,8 @@
 package com.example.iamservice.service.cache;
 
+import com.example.commonlib.exception.NotFoundException;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.User;
-import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;

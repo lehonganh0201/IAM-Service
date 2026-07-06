@@ -1,8 +1,8 @@
 package com.example.iamservice.service.keycloak;
 
+import com.example.commonlib.exception.BadRequestException;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.dto.response.KeycloakTokenResponse;
-import com.example.iamservice.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;

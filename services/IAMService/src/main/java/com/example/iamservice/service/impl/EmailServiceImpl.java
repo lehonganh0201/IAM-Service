@@ -1,7 +1,7 @@
 package com.example.iamservice.service.impl;
 
+import com.example.commonlib.exception.BadRequestException;
 import com.example.iamservice.constant.EmailTemplate;
-import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

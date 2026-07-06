@@ -1,8 +1,8 @@
 package com.example.iamservice.security.jwt;
 
+import com.example.commonlib.exception.BadRequestException;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.entity.User;
-import com.example.iamservice.exception.BadRequestException;
 import com.example.iamservice.util.RSAKeyUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

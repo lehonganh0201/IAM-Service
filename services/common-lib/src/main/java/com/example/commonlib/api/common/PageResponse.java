@@ -1,4 +1,4 @@
-package com.example.iamservice.domain.dto.response.common;
+package com.example.commonlib.api.common;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;

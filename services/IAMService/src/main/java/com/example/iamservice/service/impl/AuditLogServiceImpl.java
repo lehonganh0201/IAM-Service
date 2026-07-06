@@ -1,11 +1,11 @@
 package com.example.iamservice.service.impl;
 
+import com.example.commonlib.api.common.PageResponse;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.constant.AuditResult;
 import com.example.iamservice.domain.dto.request.AuditLogCommand;
 import com.example.iamservice.domain.dto.response.AuditLogResponse;
-import com.example.iamservice.domain.dto.response.common.PageResponse;
 import com.example.iamservice.domain.entity.AuditLog;
 import com.example.iamservice.domain.mapper.AuditLogMapper;
 import com.example.iamservice.repository.AuditLogRepository;

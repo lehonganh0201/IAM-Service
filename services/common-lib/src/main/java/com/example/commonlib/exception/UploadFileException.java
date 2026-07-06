@@ -1,4 +1,4 @@
-package com.example.iamservice.exception;
+package com.example.commonlib.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -6,18 +6,18 @@ import org.springframework.http.HttpStatus;
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    09/06/2026 at 15:04
+ * Created on:    10/06/2026 at 8:52
  * Project:       IAMService
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
  */
 
 @Getter
-public class NotFoundException extends RuntimeException {
+public class UploadFileException extends RuntimeException {
     private final HttpStatus status;
 
-    public NotFoundException(String message) {
+    public UploadFileException(String message) {
         super(message);
-        status = HttpStatus.NOT_FOUND;
+        status = HttpStatus.BAD_REQUEST;
     }
 }

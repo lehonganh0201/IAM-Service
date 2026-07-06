@@ -1,14 +1,14 @@
 package com.example.iamservice.controller;
 
+import com.example.commonlib.api.common.ApiResponse;
+import com.example.commonlib.api.common.ApiResponseFactory;
+import com.example.commonlib.api.common.PageResponse;
+import com.example.commonlib.api.common.PageableFactory;
 import com.example.iamservice.aop.annotation.AuditActivity;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.UserResponse;
-import com.example.iamservice.domain.dto.response.common.ApiResponse;
-import com.example.iamservice.domain.dto.response.common.ApiResponseFactory;
-import com.example.iamservice.domain.dto.response.common.PageResponse;
-import com.example.iamservice.domain.dto.response.common.PageableFactory;
 import com.example.iamservice.service.UserManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

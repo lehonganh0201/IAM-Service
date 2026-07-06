@@ -1,10 +1,10 @@
 package com.example.iamservice.config.seed;
 
+import com.example.commonlib.exception.NotFoundException;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.domain.entity.UserRole;
-import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.RoleRepository;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.repository.UserRoleRepository;

@@ -1,6 +1,6 @@
 package com.example.iamservice.util;
 
-import com.example.iamservice.exception.BadRequestException;
+import com.example.commonlib.exception.BadRequestException;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;

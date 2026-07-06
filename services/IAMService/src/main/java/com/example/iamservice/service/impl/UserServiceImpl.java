@@ -1,5 +1,9 @@
 package com.example.iamservice.service.impl;
 
+import com.example.commonlib.exception.BadRequestException;
+import com.example.commonlib.exception.ConflictException;
+import com.example.commonlib.exception.NotFoundException;
+import com.example.commonlib.exception.UnauthorizedException;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.config.properties.IdentityProviderType;
 import com.example.iamservice.constant.AuditAction;
@@ -9,10 +13,6 @@ import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.KeycloakUserProvisioningResult;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.User;
-import com.example.iamservice.exception.BadRequestException;
-import com.example.iamservice.exception.ConflictException;
-import com.example.iamservice.exception.NotFoundException;
-import com.example.iamservice.exception.UnauthorizedException;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.service.AuditLogService;
 import com.example.iamservice.service.EmailService;

@@ -1,6 +1,6 @@
-package com.example.iamservice.domain.dto.response.common;
+package com.example.commonlib.api.common;
 
-import com.example.iamservice.exception.BadRequestException;
+import com.example.commonlib.exception.BadRequestException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
