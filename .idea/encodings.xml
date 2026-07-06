@@ -6,6 +6,7 @@
     <file url="file://$PROJECT_DIR$/services/IAMService/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/services/common-lib/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/services/storage-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/user-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/storage-service/src/main/java" charset="UTF-8" />
   </component>
 </project>
