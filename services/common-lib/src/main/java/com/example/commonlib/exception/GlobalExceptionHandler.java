@@ -1,7 +1,7 @@
-package com.example.iamservice.exception;
+package com.example.commonlib.exception;
 
-import com.example.iamservice.base.RestData;
-import com.example.iamservice.base.VsResponseUtil;
+import com.example.commonlib.api.RestData;
+import com.example.commonlib.api.VsResponseUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;

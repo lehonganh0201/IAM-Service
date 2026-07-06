@@ -1,4 +1,4 @@
-package com.example.iamservice.exception;
+package com.example.commonlib.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -6,18 +6,18 @@ import org.springframework.http.HttpStatus;
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    10/06/2026 at 8:52
+ * Created on:    17/06/2026 at 14:03
  * Project:       IAMService
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
  */
 
 @Getter
-public class UploadFileException extends RuntimeException {
+public class InvalidIamUserException extends RuntimeException{
     private final HttpStatus status;
 
-    public UploadFileException(String message) {
+    public InvalidIamUserException(String message) {
         super(message);
-        status = HttpStatus.BAD_REQUEST;
+        status = HttpStatus.UNAUTHORIZED;
     }
 }

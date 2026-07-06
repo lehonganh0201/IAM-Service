@@ -1,11 +1,11 @@
 package com.example.iamservice.security.jwt;
 
+import com.example.commonlib.api.common.ApiError;
+import com.example.commonlib.api.common.ApiResponse;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.constant.AuditResult;
 import com.example.iamservice.domain.dto.request.AuditLogCommand;
-import com.example.iamservice.domain.dto.response.common.ApiError;
-import com.example.iamservice.domain.dto.response.common.ApiResponse;
 import com.example.iamservice.service.AuditLogService;
 import com.example.iamservice.util.AuditRequestInfoProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;

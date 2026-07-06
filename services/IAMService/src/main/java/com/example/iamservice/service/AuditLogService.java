@@ -1,10 +1,10 @@
 package com.example.iamservice.service;
 
+import com.example.commonlib.api.common.PageResponse;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResult;
 import com.example.iamservice.domain.dto.request.AuditLogCommand;
 import com.example.iamservice.domain.dto.response.AuditLogResponse;
-import com.example.iamservice.domain.dto.response.common.PageResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;

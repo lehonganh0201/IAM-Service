@@ -1,9 +1,9 @@
 package com.example.iamservice.controller;
 
+import com.example.commonlib.api.RestApiV1;
+import com.example.commonlib.api.RestData;
+import com.example.commonlib.api.VsResponseUtil;
 import com.example.iamservice.aop.annotation.RateLimit;
-import com.example.iamservice.base.RestApiV1;
-import com.example.iamservice.base.RestData;
-import com.example.iamservice.base.VsResponseUtil;
 import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.domain.dto.response.KeycloakLoginResponse;

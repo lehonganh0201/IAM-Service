@@ -1,6 +1,6 @@
-package com.example.iamservice.domain.dto.response.common;
+package com.example.commonlib.api.common;
 
-import com.example.iamservice.context.RequestContext;
+import com.example.commonlib.web.context.RequestContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

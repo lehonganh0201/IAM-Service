@@ -1,4 +1,4 @@
-package com.example.iamservice.context;
+package com.example.commonlib.web.context;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

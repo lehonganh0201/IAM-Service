@@ -1,8 +1,8 @@
 package com.example.iamservice.controller;
 
-import com.example.iamservice.base.RestApiV1;
-import com.example.iamservice.base.RestData;
-import com.example.iamservice.base.VsResponseUtil;
+import com.example.commonlib.api.RestApiV1;
+import com.example.commonlib.api.RestData;
+import com.example.commonlib.api.VsResponseUtil;
 import com.example.iamservice.domain.dto.request.UpdateUserPasswordRequest;
 import com.example.iamservice.domain.dto.request.UpdateUserRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;
@@ -10,7 +10,6 @@ import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

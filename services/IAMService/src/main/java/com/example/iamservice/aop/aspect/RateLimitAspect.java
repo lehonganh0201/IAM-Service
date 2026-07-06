@@ -1,8 +1,8 @@
 package com.example.iamservice.aop.aspect;
 
+import com.example.commonlib.exception.TooManyRequestsException;
 import com.example.iamservice.aop.annotation.RateLimit;
 import com.example.iamservice.config.RateLimitConfig;
-import com.example.iamservice.exception.TooManyRequestsException;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
@@ -12,8 +12,6 @@ import lombok.extern.log4j.Log4j2;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.context.request.RequestContextHolder;

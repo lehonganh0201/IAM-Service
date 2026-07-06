@@ -1,6 +1,6 @@
 package com.example.iamservice.service;
 
-import com.example.iamservice.domain.dto.response.common.PageResponse;
+import com.example.commonlib.api.common.PageResponse;
 import com.example.iamservice.domain.dto.request.CreatePermissionRequest;
 import com.example.iamservice.domain.dto.request.UpdatePermissionRequest;
 import com.example.iamservice.domain.dto.response.PermissionResponse;

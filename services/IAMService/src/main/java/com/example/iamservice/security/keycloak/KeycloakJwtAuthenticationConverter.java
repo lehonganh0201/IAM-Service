@@ -1,7 +1,7 @@
 package com.example.iamservice.security.keycloak;
 
+import com.example.commonlib.exception.InvalidIamUserException;
 import com.example.iamservice.domain.entity.User;
-import com.example.iamservice.exception.InvalidIamUserException;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.security.IamPrincipal;
 import lombok.RequiredArgsConstructor;

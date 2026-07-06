@@ -1,10 +1,10 @@
 package com.example.iamservice.service.impl;
 
+import com.example.commonlib.exception.BadRequestException;
+import com.example.commonlib.exception.NotFoundException;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.domain.dto.response.IssuedRefreshToken;
 import com.example.iamservice.domain.entity.RefreshToken;
-import com.example.iamservice.exception.BadRequestException;
-import com.example.iamservice.exception.NotFoundException;
 import com.example.iamservice.repository.RefreshTokenRepository;
 import com.example.iamservice.util.TokenHashingService;
 import com.example.iamservice.service.RefreshTokenService;
