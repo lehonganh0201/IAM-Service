@@ -81,7 +81,7 @@ public class UserUseCases {
         userRepository.save(e);
     }
 
-    private UserEntity find(UUID id) {
+    public UserEntity find(UUID id) {
         return userRepository.findByIdAndStatusNot(id, UserStatus.DELETED).orElseThrow(() -> new NotFoundException("User not found"));
     }
 }
