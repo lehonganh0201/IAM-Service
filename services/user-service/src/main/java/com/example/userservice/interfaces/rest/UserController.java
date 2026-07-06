@@ -10,9 +10,14 @@ import com.example.userservice.application.dto.request.CreateUserRequest;
 import com.example.userservice.application.dto.response.UserResponse;
 import com.example.userservice.application.usecase.AvatarUseCase;
 import com.example.userservice.application.usecase.UserUseCases;
+import com.example.userservice.application.usecase.UserImportUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +40,7 @@ import java.util.UUID;
 public class UserController {
     private final UserUseCases useCases;
     private final AvatarUseCase avatarUseCase;
+    private final UserImportUseCase importUseCase;
     private final ApiResponseFactory responseFactory;
 
     @PostMapping("/users")
@@ -108,5 +114,16 @@ public class UserController {
                         "Avatar deleted",
                         avatarUseCase.deleteAvatar(id))
         );
+    }
+
+    @GetMapping("/import/template")
+    @PreAuthorize("hasAnyAuthority('iam:user:import','ROLE_admin')")
+    public ResponseEntity<Resource> template() {
+        byte[] b = importUseCase.template();
+        return ResponseEntity.ok().contentType(
+                MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename("user-import-template.xlsx")
+                                .build().toString()).contentLength(b.length).body(new ByteArrayResource(b));
     }
 }
