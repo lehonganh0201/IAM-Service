@@ -22,9 +22,12 @@ jobs:
           distribution: 'temurin'
 
       - name: In thông tin môi trường
+        shell: powershell
         run: |
-          echo "Chuẩn bị in thông tin môi trường cho dự án ${PROJECT_NAME}..."
+          echo "Chuẩn bị in thông tin môi trường cho dự án $env:PROJECT_NAME..."
           java -version
-          echo "Tên dự án hiện tại là ${PROJECT_NAME}"
-          echo "Nhánh Git đang chạy workflow là ${GITHUB_REF_NAME}"
+          echo "Tên dự án hiện tại là $env:PROJECT_NAME"
+          echo "Nhánh Git đang chạy workflow là $env:GITHUB_REF_NAME"
           echo "Hoàn thành job in thông tin."
+        env:
+          PROJECT_NAME: IAM Service Platform
