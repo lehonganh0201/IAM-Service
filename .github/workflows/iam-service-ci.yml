@@ -1,0 +1,37 @@
+name: Build IAM Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/IAMService/**'
+      - 'services/common-lib/**'
+      - '.github/workflows/iam-service-ci.yml'
+
+jobs:
+  build_user_service:
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Checkout mã nguồn
+        uses: actions/checkout@v5
+
+      - name: Cài đặt JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build và install common-lib
+        run: mvn -f services/common-lib/pom.xml clean install -DskipTests
+
+      - name: Build user-service
+        run: mvn -f services/IAMService/pom.xml clean package -DskipTests
+
+      - name: Lưu artifact user-service
+        uses: actions/upload-artifact@v4
+        with:
+          name: iam-service-jar
+          path: services/IAMService/target/*.jar
+          retention-days: 3
