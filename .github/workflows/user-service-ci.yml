@@ -1,19 +1,26 @@
-name: Build Spring Boot App
+name: Build User Service
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'services/user-service/**'
+      - '.github/workflows/user-service-ci.yml'
 
 jobs:
-  build_executable_jar:
+  build_user_service:
     runs-on: [self-hosted]
+
+    defaults:
+      run:
+        working-directory: services/user-service
 
     steps:
       - name: Checkout mã nguồn
         uses: actions/checkout@v5
 
-      - name: Cài đặt môi trường JDK 17
+      - name: Cài đặt JDK 17
         uses: actions/setup-java@v5
         with:
           java-version: '17'
@@ -22,12 +29,12 @@ jobs:
       - name: Cấp quyền thực thi cho Maven Wrapper
         run: chmod +x ./mvnw
 
-      - name: Biên dịch và đóng gói tệp JAR bằng Maven Wrapper
+      - name: Build User Service bằng Maven
         run: ./mvnw clean package -DskipTests
 
-      - name: Lưu trữ sản phẩm Artifact
+      - name: Lưu artifact
         uses: actions/upload-artifact@v4
         with:
           name: user-service-jar
-          path: target/*.jar
+          path: services/user-service/target/*.jar
           retention-days: 3
