@@ -1,9 +1,9 @@
 package com.example.iamservice.config;
 
+import com.example.commonlib.security.KeycloakJwtAuthenticationConverter;
 import com.example.iamservice.security.jwt.JwtAccessDeniedHandler;
 import com.example.iamservice.security.jwt.JwtAuthenticationEntryPoint;
 import com.example.iamservice.filter.JwtAuthenticationFilter;
-import com.example.iamservice.security.keycloak.KeycloakJwtAuthenticationConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -38,7 +38,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    private final KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter;
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/**",
@@ -70,7 +69,7 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(jwtAccessDeniedHandler)
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter))
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(new KeycloakJwtAuthenticationConverter()))
                 )
                 .build();
     }

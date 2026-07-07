@@ -2,8 +2,11 @@ package com.example.iamservice.service.keycloak;
 
 import com.example.commonlib.exception.BadRequestException;
 import com.example.iamservice.config.properties.AppProperties;
+import com.example.iamservice.domain.dto.response.AuthResponse;
 import com.example.iamservice.domain.dto.response.KeycloakTokenResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class KeycloakUserService {
 
+    private static final Logger log = LoggerFactory.getLogger(KeycloakUserService.class);
     private final AppProperties appProperties;
     private final RestClient restClient = RestClient.create();
 
@@ -57,6 +61,38 @@ public class KeycloakUserService {
                 .encode(StandardCharsets.UTF_8)
                 .build()
                 .toUriString();
+    }
+
+    public AuthResponse login(String username, String password) {
+        AppProperties.Keycloak keycloak = appProperties.getKeycloak();
+
+        LinkedMultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grant_type", "password");
+        form.add("client_id", keycloak.getUserClientId());
+        form.add("username", username);
+        form.add("password", password);
+
+        if (keycloak.getUserClientSecret() != null && !keycloak.getUserClientSecret().trim().isBlank()) {
+            form.add("client_secret", keycloak.getUserClientSecret());
+        }
+
+        try {
+            KeycloakTokenResponse tokenResponse = restClient.post()
+                    .uri(tokenEndpoint())
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .body(KeycloakTokenResponse.class);
+
+            assert tokenResponse != null;
+            return AuthResponse.builder()
+                    .accessToken(tokenResponse.accessToken())
+                    .refreshToken(tokenResponse.refreshToken())
+                    .build();
+        } catch (Exception ex) {
+            log.info("Cannot login in provider: {}", ex.getMessage());
+            throw new BadRequestException("Cannot login in provider");
+        }
     }
 
     public KeycloakTokenResponse refresh(String refreshToken) {
