@@ -1,0 +1,30 @@
+name: Print Environment Info
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_NAME: "IAM Service Platform"
+
+jobs:
+  print_env_job:
+    runs-on: [self-hosted, iamservice] # Chỉ định chạy trên Runner cục bộ
+    steps:
+      - name: Lấy mã nguồn về máy Runner
+        uses: actions/checkout@v5
+
+      - name: Thiết lập môi trường Java 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: In thông tin môi trường
+        run: |
+          echo "Chuẩn bị in thông tin môi trường cho dự án ${PROJECT_NAME}..."
+          java -version
+          echo "Tên dự án hiện tại là ${PROJECT_NAME}"
+          echo "Nhánh Git đang chạy workflow là ${GITHUB_REF_NAME}"
+          echo "Hoàn thành job in thông tin."
