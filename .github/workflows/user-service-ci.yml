@@ -24,10 +24,10 @@ jobs:
           distribution: 'temurin'
 
       - name: Build và install common-lib
-        run: ./mvnw -f services/common-lib/pom.xml clean install -DskipTests
+        run: mvn -f services/common-lib/pom.xml clean install -DskipTests
 
       - name: Build user-service
-        run: ./mvnw -f services/user-service/pom.xml clean package -DskipTests
+        run: mvn -f services/user-service/pom.xml clean package -DskipTests
 
       - name: Lưu artifact user-service
         uses: actions/upload-artifact@v4
