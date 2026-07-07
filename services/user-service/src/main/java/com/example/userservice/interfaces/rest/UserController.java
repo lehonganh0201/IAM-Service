@@ -61,7 +61,7 @@ public class UserController {
                         useCases.get(id)));
     }
 
-    @GetMapping
+    @GetMapping("/users")
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> list(@RequestParam(required = false) String keyword,
                                                                         @RequestParam(required = false) String province,
                                                                         @RequestParam(required = false) Double minYears,

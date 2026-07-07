@@ -73,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponse login(AuthRequest request) {
         if (isKeycloakMode()) {
-            throw new BadRequestException("Password login is disabled in Keycloak mode. Use Keycloak login URL.");
+            return loginWithKeycloak(request);
         }
 
         User user = findLoginUser(request.getUsernameOrEmail());
@@ -111,6 +111,10 @@ public class AuthServiceImpl implements AuthService {
                 .tokenType("Bearer")
                 .refreshTokenExpiresAt(issuedRefreshToken.expiresAt())
                 .build();
+    }
+
+    private AuthResponse loginWithKeycloak(AuthRequest request) {
+        return keycloakUserService.login(request.getUsernameOrEmail(), request.getPassword());
     }
 
     @Override

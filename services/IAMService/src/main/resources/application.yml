@@ -3,7 +3,7 @@ spring:
     import: optional:file:.env[.properties]
 
   application:
-    name: ${APP_NAME}
+    name: ${APP_NAME:IAMService}
 
   servlet:
     multipart:
@@ -11,4 +11,4 @@ spring:
       max-request-size: 10MB
 
   profiles:
-    active: ${APP_ENV}
+    active: ${APP_ENV:dev}
