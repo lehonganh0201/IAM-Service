@@ -7,7 +7,7 @@ on:
     paths:
       - 'services/user-service/**'
       - 'services/common-lib/**'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/user-service-ci.yml'
 
 jobs:
   build_user_service:
