@@ -6,15 +6,12 @@ on:
       - main
     paths:
       - 'services/user-service/**'
-      - '.github/workflows/user-service-ci.yml'
+      - 'services/common-lib/**'
+      - '.github/workflows/ci.yml'
 
 jobs:
   build_user_service:
     runs-on: [self-hosted]
-
-    defaults:
-      run:
-        working-directory: services/user-service
 
     steps:
       - name: Checkout mã nguồn
@@ -26,13 +23,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Cấp quyền thực thi cho Maven Wrapper
-        run: chmod +x ./mvnw
+      - name: Build và install common-lib
+        run: mvnw -f services/common-lib/pom.xml clean install -DskipTests
 
-      - name: Build User Service bằng Maven
-        run: ./mvnw clean package -DskipTests
+      - name: Build user-service
+        run: mvnw -f services/user-service/pom.xml clean package -DskipTests
 
-      - name: Lưu artifact
+      - name: Lưu artifact user-service
         uses: actions/upload-artifact@v4
         with:
           name: user-service-jar
