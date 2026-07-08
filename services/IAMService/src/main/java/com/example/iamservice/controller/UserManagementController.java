@@ -11,6 +11,7 @@ import com.example.iamservice.domain.dto.request.*;
 import com.example.iamservice.domain.dto.response.ImportResultResponse;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.service.UserManagementService;
+import com.example.iamservice.service.exporter.ExportService;
 import com.example.iamservice.service.importer.ImportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,10 +51,11 @@ public class UserManagementController {
 
     private final UserManagementService userManagementService;
     private final ImportService importService;
+    private final ExportService exportService;
     private final ApiResponseFactory responseFactory;
     private final PageableFactory pageableFactory;
 
-    @PreAuthorize("hasPermission(null, 'USER_READ')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getUsers(
             @RequestParam(required = false) String keyword,
@@ -78,7 +80,7 @@ public class UserManagementController {
         );
     }
 
-    @PreAuthorize("hasPermission(null, 'USER_READ')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long id) {
         UserResponse data = userManagementService.getUserById(id);
@@ -93,7 +95,7 @@ public class UserManagementController {
             resourceType = AuditResourceType.USER,
             message = "Create user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_CREATE')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PostMapping
     public ResponseEntity<ApiResponse<UserResponse>> createUser(
             @Valid @RequestBody CreateUserRequest request
@@ -111,7 +113,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Update user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_UPDATE')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
             @PathVariable Long id,
@@ -130,7 +132,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Lock user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_LOCK')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PatchMapping("/{id}/lock")
     public ResponseEntity<ApiResponse<UserResponse>> lockUser(@PathVariable Long id) {
         UserResponse data = userManagementService.lockUser(id);
@@ -146,7 +148,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Unlock user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_UNLOCK')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PatchMapping("/{id}/unlock")
     public ResponseEntity<ApiResponse<UserResponse>> unlockUser(@PathVariable Long id) {
         UserResponse data = userManagementService.unlockUser(id);
@@ -162,7 +164,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Assign roles to user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_ASSIGN_ROLE')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PatchMapping("/{id}/roles")
     public ResponseEntity<ApiResponse<UserResponse>> assignRoles(
             @PathVariable Long id,
@@ -181,7 +183,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Reset user password"
     )
-    @PreAuthorize("hasPermission(null, 'USER_RESET_PASSWORD')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @PathVariable Long id,
@@ -200,7 +202,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Delete user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_DELETE')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @PathVariable Long id,
@@ -226,7 +228,7 @@ public class UserManagementController {
                                 .build().toString()).contentLength(b.length).body(new ByteArrayResource(b));
     }
 
-    @PostMapping(value = "/users/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('iam:user:import','ROLE_admin')")
     public ResponseEntity<ApiResponse<ImportResultResponse>> importUsers(@RequestPart MultipartFile file,
                                                                          @RequestParam(defaultValue = "true") boolean dryRun) {
@@ -235,5 +237,16 @@ public class UserManagementController {
                         "Import processed",
                         importService.importUsers(file, dryRun))
         );
+    }
+
+    @GetMapping("/export")
+    @PreAuthorize("hasAnyAuthority('iam:user:export','ROLE_admin')")
+    public ResponseEntity<Resource> export(@RequestParam(defaultValue = "xlsx") String format, @RequestParam(required = false) String keyword, @RequestParam(required = false) String province, @RequestParam(required = false) Double minYears, @RequestParam(required = false) Double maxYears) {
+        var f = exportService.export(format, new UserSearchQuery(keyword, province, minYears, maxYears));
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(f.contentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(f.filename()).build().toString()).contentLength(f.bytes().length)
+                .body(new ByteArrayResource(f.bytes()));
     }
 }
