@@ -9,15 +9,10 @@ import com.example.userservice.application.dto.request.UserSearchQuery;
 import com.example.userservice.application.dto.request.CreateUserRequest;
 import com.example.userservice.application.dto.response.UserResponse;
 import com.example.userservice.application.usecase.AvatarUseCase;
-import com.example.userservice.application.usecase.UserExportUseCase;
 import com.example.userservice.application.usecase.UserUseCases;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,7 +35,6 @@ import java.util.UUID;
 public class UserController {
     private final UserUseCases useCases;
     private final AvatarUseCase avatarUseCase;
-    private final UserExportUseCase exportUseCase;
     private final ApiResponseFactory responseFactory;
 
     @PostMapping("/users")
@@ -114,16 +108,5 @@ public class UserController {
                         "Avatar deleted",
                         avatarUseCase.deleteAvatar(id))
         );
-    }
-
-    @GetMapping("/users/export")
-    @PreAuthorize("hasAnyAuthority('iam:user:export','ROLE_admin')")
-    public ResponseEntity<Resource> export(@RequestParam(defaultValue = "xlsx") String format, @RequestParam(required = false) String keyword, @RequestParam(required = false) String province, @RequestParam(required = false) Double minYears, @RequestParam(required = false) Double maxYears) {
-        var f = exportUseCase.export(format, new UserSearchQuery(keyword, province, minYears, maxYears));
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(f.contentType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment().filename(f.filename()).build().toString()).contentLength(f.bytes().length)
-                .body(new ByteArrayResource(f.bytes()));
     }
 }
