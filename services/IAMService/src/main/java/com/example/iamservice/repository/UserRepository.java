@@ -32,8 +32,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     boolean existsByUsernameAndDeletedFalse(String username);
 
-    @EntityGraph(attributePaths = {"roles"})
-    Optional<User> findWithRolesByIdAndDeletedFalse(Long id);
+    Optional<User> findByIdAndDeletedFalse(Long id);
 
     Collection<User> findByUsernameIn(Set<String> us);
 }

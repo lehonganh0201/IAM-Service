@@ -44,8 +44,12 @@ public class UserMapper {
                         .map(this::toRoleSummary)
                         .collect(Collectors.toSet());
 
-        UserProfile profile = profileRepository.findById(user.getProfileId()).orElse(null);
-        UserProfileResponse profileResponse = profile != null ? toProfileResponse(profile) : null;
+        UserProfileResponse profileResponse = null;
+
+        if (user.getProfileId() != null) {
+            UserProfile profile = profileRepository.findById(user.getProfileId()).orElse(null);
+            profileResponse = profile != null ? toProfileResponse(profile) : null;
+        }
 
         return new UserResponse(
                 user.getId(),

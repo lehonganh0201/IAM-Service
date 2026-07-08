@@ -9,7 +9,6 @@
         <outputRelativeToContentRoot value="true" />
         <module name="IAMService" />
         <module name="storage-service" />
-        <module name="user-service" />
       </profile>
       <profile name="Annotation profile for common-lib" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -21,6 +20,9 @@
         <module name="common-lib" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="user-service" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
