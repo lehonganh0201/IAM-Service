@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+
+# Maven build output
+target/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.*
+application-local.properties
+application-local.yml
+
+# Docker files không cần copy vào image nếu không dùng bên trong container
+docker-compose.yml
+docker-compose.*.yml
+
+# Node / frontend nếu project có kèm frontend
+node_modules/
+dist/
+build/
+
+# Test report / coverage
+coverage/
+surefire-reports/
+failsafe-reports/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
