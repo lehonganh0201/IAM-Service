@@ -8,16 +8,13 @@ import com.example.userservice.application.dto.request.UpdateUserRequest;
 import com.example.userservice.application.dto.request.UserSearchQuery;
 import com.example.userservice.application.dto.request.CreateUserRequest;
 import com.example.userservice.application.dto.response.UserResponse;
-import com.example.userservice.application.usecase.AvatarUseCase;
 import com.example.userservice.application.usecase.UserUseCases;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -34,7 +31,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserController {
     private final UserUseCases useCases;
-    private final AvatarUseCase avatarUseCase;
     private final ApiResponseFactory responseFactory;
 
     @PostMapping("/users")
@@ -84,29 +80,6 @@ public class UserController {
         return ResponseEntity.ok(
                 responseFactory.success(
                         "Deleted successfully", null)
-        );
-    }
-
-    @PostMapping(value = "/users/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
-    public ResponseEntity<ApiResponse<UserResponse>> uploadAvatar(
-            @PathVariable UUID id,
-            @RequestParam("file") MultipartFile file
-    ) {
-        return ResponseEntity.ok(
-                responseFactory.success(
-                        "Avatar uploaded", avatarUseCase.uploadAvatar(id, file)
-                )
-        );
-    }
-
-    @DeleteMapping("/users/{id}/avatar")
-    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
-    public ResponseEntity<ApiResponse<UserResponse>> deleteAvatar(@PathVariable UUID id) {
-        return ResponseEntity.ok(
-                responseFactory.success(
-                        "Avatar deleted",
-                        avatarUseCase.deleteAvatar(id))
         );
     }
 }
