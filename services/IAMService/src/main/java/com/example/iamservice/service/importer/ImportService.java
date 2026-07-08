@@ -7,6 +7,7 @@ import com.example.iamservice.domain.dto.importer.UserImportRow;
 import com.example.iamservice.domain.dto.response.ImportResultResponse;
 import com.example.iamservice.domain.entity.User;
 import com.example.iamservice.domain.entity.UserProfile;
+import com.example.iamservice.repository.UserProfileRepository;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.validation.ImportRowValidator;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class ImportService {
     static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final UserRepository userRepository;
     private final List<ImportRowValidator> validators;
+    private final UserProfileRepository userProfileRepository;
 
     public byte[] template() {
         try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -64,28 +66,84 @@ public class ImportService {
 
     @Transactional
     public ImportResultResponse importUsers(MultipartFile file, boolean dryRun) {
-        if (file == null || file.isEmpty()) throw new BadRequestException("File không được rỗng");
-        if (file.getOriginalFilename() == null || !file.getOriginalFilename().toLowerCase().endsWith(".xlsx"))
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("File không được rỗng");
+        }
+
+        if (file.getOriginalFilename() == null
+                || !file.getOriginalFilename().toLowerCase().endsWith(".xlsx")) {
             throw new BadRequestException("Chỉ nhận file .xlsx");
+        }
+
         try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
             Sheet sh = wb.getSheetAt(0);
+
             checkHeader(sh.getRow(0));
+
             List<ImportErrorItem> errs = new ArrayList<>();
+
             List<UserImportRow> rows = parse(sh, errs);
+
             dupFile(rows, errs);
             dupDb(rows, errs);
+
             rows.forEach(r -> validators.forEach(v -> v.validate(r, errs)));
-            int er = (int) errs.stream().map(ImportErrorItem::rowIndex).distinct().count();
+
+            int er = (int) errs.stream()
+                    .map(ImportErrorItem::rowIndex)
+                    .distinct()
+                    .count();
+
             if (!errs.isEmpty()) {
-                if (!dryRun)
+                if (!dryRun) {
                     throw new BadRequestException("Import file has validation errors");
-                return new ImportResultResponse(rows.size(), rows.size() - er, er, errs);
+                }
+
+                return new ImportResultResponse(
+                        rows.size(),
+                        rows.size() - er,
+                        er,
+                        errs
+                );
             }
-            if (!dryRun) userRepository.saveAll(rows.stream().map(this::entity).toList());
+
+            if (!dryRun) {
+                List<UserProfile> profiles = rows.stream()
+                        .map(this::profileEntity)
+                        .toList();
+
+                List<UserProfile> savedProfiles = userProfileRepository.saveAll(profiles);
+
+                List<User> users = new ArrayList<>();
+
+                for (int i = 0; i < rows.size(); i++) {
+                    UserImportRow row = rows.get(i);
+                    UserProfile savedProfile = savedProfiles.get(i);
+
+                    User user = entity(row);
+                    user.setProfileId(savedProfile.getId());
+
+                    users.add(user);
+                }
+
+                userRepository.saveAll(users);
+            }
+
             return new ImportResultResponse(rows.size(), rows.size(), 0, List.of());
+
         } catch (IOException e) {
             throw new BadRequestException("Không đọc được file Excel");
         }
+    }
+
+    private UserProfile profileEntity(UserImportRow row) {
+        return UserProfile.builder()
+                .street(row.street())
+                .ward(row.ward())
+                .district(row.district())
+                .province(row.province())
+                .yearsOfExperience(row.yearsOfExperience())
+                .build();
     }
 
     void checkHeader(Row h) {

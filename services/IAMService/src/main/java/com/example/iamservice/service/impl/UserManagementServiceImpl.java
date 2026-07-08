@@ -377,7 +377,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     private User getActiveUser(Long id) {
-        return userRepository.findWithRolesByIdAndDeletedFalse(id)
+        return userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 

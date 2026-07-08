@@ -34,7 +34,6 @@ public class UserProfileCacheService {
                 .dateOfBirth(user.getDateOfBirth())
                 .phoneNumber(user.getPhoneNumber())
                 .email(user.getEmail())
-                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 
