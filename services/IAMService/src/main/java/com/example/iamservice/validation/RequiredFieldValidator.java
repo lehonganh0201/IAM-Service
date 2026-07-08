@@ -1,6 +1,7 @@
-package com.example.userservice.application.importer;
+package com.example.iamservice.validation;
 
-import com.example.userservice.application.dto.response.ImportErrorItem;
+import com.example.iamservice.domain.dto.importer.ImportErrorItem;
+import com.example.iamservice.domain.dto.importer.UserImportRow;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -9,7 +10,7 @@ import java.util.List;
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    06/07/2026 at 17:00
+ * Created on:    08/07/2026 at 11:40
  * Project:       iam-platform
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
@@ -31,3 +32,4 @@ public class RequiredFieldValidator implements ImportRowValidator {
             e.add(new ImportErrorItem(r.excelRowIndex(), "Số năm kinh nghiệm", r.yearsOfExperience(), "Số năm kinh nghiệm phải >= 0"));
     }
 }
+

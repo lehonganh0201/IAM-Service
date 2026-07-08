@@ -21,9 +21,6 @@
         <module name="common-lib" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="services" target="1.5" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
