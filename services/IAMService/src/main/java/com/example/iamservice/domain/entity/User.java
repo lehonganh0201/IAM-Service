@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * ----------------------------------------------------------------------------
@@ -51,6 +52,8 @@ public class User extends SoftDeleteAuditing {
     private LocalDate dateOfBirth;
 
     private String avatarUrl;
+
+    private Long profileId;
 
     public boolean isActive() {
         return Boolean.TRUE.equals(enabled)

@@ -8,15 +8,19 @@ import com.example.iamservice.aop.annotation.AuditActivity;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.domain.dto.request.*;
+import com.example.iamservice.domain.dto.response.ImportResultResponse;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.service.UserManagementService;
+import com.example.iamservice.service.importer.ImportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Set;
 
@@ -45,6 +49,7 @@ public class UserManagementController {
     );
 
     private final UserManagementService userManagementService;
+    private final ImportService importService;
     private final ApiResponseFactory responseFactory;
     private final PageableFactory pageableFactory;
 
@@ -207,6 +212,28 @@ public class UserManagementController {
 
         return ResponseEntity.ok(
                 responseFactory.success("Delete user successfully")
+        );
+    }
+
+    @GetMapping("/import/template")
+    @PreAuthorize("hasAnyAuthority('iam:user:import','ROLE_admin')")
+    public ResponseEntity<Resource> template() {
+        byte[] b = importService.template();
+        return ResponseEntity.ok().contentType(
+                        MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename("user-import-template.xlsx")
+                                .build().toString()).contentLength(b.length).body(new ByteArrayResource(b));
+    }
+
+    @PostMapping(value = "/users/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('iam:user:import','ROLE_admin')")
+    public ResponseEntity<ApiResponse<ImportResultResponse>> importUsers(@RequestPart MultipartFile file,
+                                                                         @RequestParam(defaultValue = "true") boolean dryRun) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Import processed",
+                        importService.importUsers(file, dryRun))
         );
     }
 }

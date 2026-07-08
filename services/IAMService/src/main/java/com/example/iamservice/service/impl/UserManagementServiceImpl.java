@@ -10,9 +10,11 @@ import com.example.iamservice.domain.dto.response.KeycloakUserProvisioningResult
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.domain.entity.UserProfile;
 import com.example.iamservice.domain.entity.UserRole;
 import com.example.iamservice.domain.mapper.UserMapper;
 import com.example.iamservice.repository.RoleRepository;
+import com.example.iamservice.repository.UserProfileRepository;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.repository.UserRoleRepository;
 import com.example.iamservice.repository.specification.UserSpecification;
@@ -53,6 +55,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     private final UserMapper userMapper;
     private final SoftDeleteService softDeleteService;
     private final UserRoleRepository userRoleRepository;
+    private final UserProfileRepository userProfileRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -225,6 +228,16 @@ public class UserManagementServiceImpl implements UserManagementService {
     private UserResponse createUserWithSelfIdp(CreateUserRequest request) {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
+        UserProfile profile = UserProfile.builder()
+                .street(request.getStreet())
+                .ward(request.getWard())
+                .district(request.getDistrict())
+                .province(request.getProvince())
+                .yearsOfExperience(request.getYearsOfExperience())
+                .build();
+
+        profile = userProfileRepository.save(profile);
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -233,6 +246,7 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .phoneNumber(request.getPhoneNumber())
                 .dateOfBirth(request.getDateOfBirth())
                 .passwordHash(encodedPassword)
+                .profileId(profile.getId())
                 .enabled(true)
                 .locked(false)
                 .build();
@@ -254,6 +268,16 @@ public class UserManagementServiceImpl implements UserManagementService {
                     )
             );
 
+            UserProfile profile = UserProfile.builder()
+                    .street(request.getStreet())
+                    .ward(request.getWard())
+                    .district(request.getDistrict())
+                    .province(request.getProvince())
+                    .yearsOfExperience(request.getYearsOfExperience())
+                    .build();
+
+            profile = userProfileRepository.save(profile);
+
             User user = User.builder()
                     .keycloakUserId(provisionedUser.keycloakUserId())
                     .username(request.getUsername())
@@ -262,6 +286,7 @@ public class UserManagementServiceImpl implements UserManagementService {
                     .lastName(request.getLastName())
                     .phoneNumber(request.getPhoneNumber())
                     .dateOfBirth(request.getDateOfBirth())
+                    .profileId(profile.getId())
                     .passwordHash(null)
                     .enabled(true)
                     .locked(false)

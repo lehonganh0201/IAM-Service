@@ -1,14 +1,14 @@
-package com.example.userservice.application.usecase;
+package com.example.iamservice.service.importer;
 
 import com.example.commonlib.exception.BadRequestException;
-import com.example.userservice.application.dto.response.ImportErrorItem;
-import com.example.userservice.application.dto.response.ImportResultResponse;
-import com.example.userservice.application.importer.ImportRowValidator;
-import com.example.userservice.application.importer.UserImportHeaders;
-import com.example.userservice.application.importer.UserImportRow;
-import com.example.userservice.domain.model.UserStatus;
-import com.example.userservice.infrastructure.persistence.UserEntity;
-import com.example.userservice.infrastructure.persistence.UserRepository;
+import com.example.iamservice.domain.dto.importer.ImportErrorItem;
+import com.example.iamservice.domain.dto.importer.UserImportHeaders;
+import com.example.iamservice.domain.dto.importer.UserImportRow;
+import com.example.iamservice.domain.dto.response.ImportResultResponse;
+import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.domain.entity.UserProfile;
+import com.example.iamservice.repository.UserRepository;
+import com.example.iamservice.validation.ImportRowValidator;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    06/07/2026 at 16:40
+ * Created on:    08/07/2026 at 11:24
  * Project:       iam-platform
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
@@ -36,7 +35,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserImportUseCase {
+public class ImportService {
     static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final UserRepository userRepository;
     private final List<ImportRowValidator> validators;
@@ -119,22 +118,22 @@ public class UserImportUseCase {
 
     void dupDb(List<UserImportRow> rows, List<ImportErrorItem> e) {
         Set<String> us = rows.stream().map(UserImportRow::username).filter(Objects::nonNull).collect(Collectors.toSet());
-        Set<String> ex = userRepository.findByUsernameInAndStatusNot(us, UserStatus.DELETED).stream().map(UserEntity::getUsername).collect(Collectors.toSet());
+        Set<String> ex = userRepository.findByUsernameIn(us).stream().map(User::getUsername).collect(Collectors.toSet());
         rows.stream().filter(r -> ex.contains(r.username())).forEach(r -> e.add(new ImportErrorItem(r.excelRowIndex(), "username", r.username(), "Username đã tồn tại")));
     }
 
-    UserEntity entity(UserImportRow r) {
-        UserEntity e = new UserEntity();
+    User entity(UserImportRow r) {
+        UserProfile profile = new UserProfile();
+        profile.setWard(r.ward());
+        profile.setDistrict(r.district());
+        profile.setProvince(r.province());
+        profile.setStreet(r.street());
+        profile.setYearsOfExperience(r.yearsOfExperience());
+
+        User e = new User();
         e.setUsername(r.username());
-        e.setFullName(r.fullName());
+        e.setFirstName(r.fullName());
         e.setDateOfBirth(r.dateOfBirth());
-        e.setStreet(r.street());
-        e.setWard(r.ward());
-        e.setDistrict(r.district());
-        e.setProvince(r.province());
-        e.setYearsOfExperience(r.yearsOfExperience());
-        e.setStatus(UserStatus.ACTIVE);
-        e.setCreatedAt(Instant.now());
         return e;
     }
 
