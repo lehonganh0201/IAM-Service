@@ -1,0 +1,87 @@
+server:
+  port: ${SERVER_PORT:8083}
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/iam_service}
+    username: ${DB_USERNAME:iam_user}
+    password: ${DB_PASSWORD:iam_pass}
+
+  jpa:
+    show-sql: ${JPA_SHOW_SQL:true}
+    hibernate:
+      ddl-auto: ${JPA_HIBERNATE_DDL_AUTO:validate}
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: ${JPA_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:change-me}
+    password: ${MAIL_PASSWORD:change-me}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: UTF-8
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/storage-iam-realm}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/storage-iam-realm/protocol/openid-connect/certs}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+app:
+  identity-provider:
+    type: ${APP_IDENTITY_PROVIDER_TYPE:KEYCLOAK}
+
+  jwt:
+    secret: ${JWT_SECRET:7b439ff5f0ca46deecef624354a7487a7439ae5673128d29fe7cc50c0da416df}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:86400000}
+
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:change-me}
+    api-key: ${CLOUDINARY_API_KEY:change-me}
+    api-secret: ${CLOUDINARY_API_SECRET:change-me}
+
+  keycloak:
+    server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8080}
+    realm: ${KEYCLOAK_REALM:storage-iam-realm}
+    issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/storage-iam-realm}
+    user-client-id: ${KEYCLOAK_USER_CLIENT_ID:auth-service}
+    user-client-secret: ${KEYCLOAK_USER_CLIENT_SECRET:auth-secret}
+    admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:auth-service}
+    admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:auth-secret}
+    redirect-uri: ${KEYCLOAK_REDIRECT_URI:http://localhost:3000/callback}
+
+  seed:
+    admin-username: ${APP_ADMIN_USERNAME:admin}
+    admin-email: ${APP_ADMIN_EMAIL:admin@example.com}
+    admin-password: ${APP_ADMIN_PASSWORD:Admin@123456}
+
+  domain-url: ${APP_DOMAIN_URL:http://localhost:${SERVER_PORT:8083}}
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:-no-request}] [%thread] %logger{36} - %msg%n"
