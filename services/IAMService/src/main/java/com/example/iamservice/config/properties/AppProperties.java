@@ -21,6 +21,7 @@ public class AppProperties {
     private Jwt jwt = new Jwt();
     private Keycloak keycloak = new Keycloak();
     private Seed seed = new Seed();
+    private StorageClientProperties storageClient = new StorageClientProperties();
 
     @Getter
     @Setter
@@ -55,5 +56,12 @@ public class AppProperties {
         private String adminClientId;
         private String adminClientSecret;
         private String redirectUri;
+    }
+
+    @Getter
+    @Setter
+    public static class StorageClientProperties {
+        private String baseUrl;
+        private String avatarVisibility;
     }
 }

@@ -249,4 +249,27 @@ public class UserManagementController {
                         ContentDisposition.attachment().filename(f.filename()).build().toString()).contentLength(f.bytes().length)
                 .body(new ByteArrayResource(f.bytes()));
     }
+
+    @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
+    public ResponseEntity<ApiResponse<UserResponse>> uploadAvatar(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Avatar uploaded", userManagementService.uploadAvatar(id, file)
+                )
+        );
+    }
+
+    @DeleteMapping("/{id}/avatar")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
+    public ResponseEntity<ApiResponse<UserResponse>> deleteAvatar(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Avatar deleted",
+                        userManagementService.deleteAvatar(id))
+        );
+    }
 }
