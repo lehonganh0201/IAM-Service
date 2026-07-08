@@ -1,14 +1,15 @@
-package com.example.userservice.application.usecase;
+package com.example.iamservice.service.importer;
 
 import com.example.commonlib.exception.BadRequestException;
-import com.example.userservice.application.dto.response.ImportErrorItem;
-import com.example.userservice.application.dto.response.ImportResultResponse;
-import com.example.userservice.application.importer.ImportRowValidator;
-import com.example.userservice.application.importer.UserImportHeaders;
-import com.example.userservice.application.importer.UserImportRow;
-import com.example.userservice.domain.model.UserStatus;
-import com.example.userservice.infrastructure.persistence.UserEntity;
-import com.example.userservice.infrastructure.persistence.UserRepository;
+import com.example.iamservice.domain.dto.importer.ImportErrorItem;
+import com.example.iamservice.domain.dto.importer.UserImportHeaders;
+import com.example.iamservice.domain.dto.importer.UserImportRow;
+import com.example.iamservice.domain.dto.response.ImportResultResponse;
+import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.domain.entity.UserProfile;
+import com.example.iamservice.repository.UserProfileRepository;
+import com.example.iamservice.repository.UserRepository;
+import com.example.iamservice.validation.ImportRowValidator;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -18,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    06/07/2026 at 16:40
+ * Created on:    08/07/2026 at 11:24
  * Project:       iam-platform
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
@@ -36,10 +36,11 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserImportUseCase {
+public class ImportService {
     static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final UserRepository userRepository;
     private final List<ImportRowValidator> validators;
+    private final UserProfileRepository userProfileRepository;
 
     public byte[] template() {
         try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -65,28 +66,84 @@ public class UserImportUseCase {
 
     @Transactional
     public ImportResultResponse importUsers(MultipartFile file, boolean dryRun) {
-        if (file == null || file.isEmpty()) throw new BadRequestException("File không được rỗng");
-        if (file.getOriginalFilename() == null || !file.getOriginalFilename().toLowerCase().endsWith(".xlsx"))
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("File không được rỗng");
+        }
+
+        if (file.getOriginalFilename() == null
+                || !file.getOriginalFilename().toLowerCase().endsWith(".xlsx")) {
             throw new BadRequestException("Chỉ nhận file .xlsx");
+        }
+
         try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
             Sheet sh = wb.getSheetAt(0);
+
             checkHeader(sh.getRow(0));
+
             List<ImportErrorItem> errs = new ArrayList<>();
+
             List<UserImportRow> rows = parse(sh, errs);
+
             dupFile(rows, errs);
             dupDb(rows, errs);
+
             rows.forEach(r -> validators.forEach(v -> v.validate(r, errs)));
-            int er = (int) errs.stream().map(ImportErrorItem::rowIndex).distinct().count();
+
+            int er = (int) errs.stream()
+                    .map(ImportErrorItem::rowIndex)
+                    .distinct()
+                    .count();
+
             if (!errs.isEmpty()) {
-                if (!dryRun)
+                if (!dryRun) {
                     throw new BadRequestException("Import file has validation errors");
-                return new ImportResultResponse(rows.size(), rows.size() - er, er, errs);
+                }
+
+                return new ImportResultResponse(
+                        rows.size(),
+                        rows.size() - er,
+                        er,
+                        errs
+                );
             }
-            if (!dryRun) userRepository.saveAll(rows.stream().map(this::entity).toList());
+
+            if (!dryRun) {
+                List<UserProfile> profiles = rows.stream()
+                        .map(this::profileEntity)
+                        .toList();
+
+                List<UserProfile> savedProfiles = userProfileRepository.saveAll(profiles);
+
+                List<User> users = new ArrayList<>();
+
+                for (int i = 0; i < rows.size(); i++) {
+                    UserImportRow row = rows.get(i);
+                    UserProfile savedProfile = savedProfiles.get(i);
+
+                    User user = entity(row);
+                    user.setProfileId(savedProfile.getId());
+
+                    users.add(user);
+                }
+
+                userRepository.saveAll(users);
+            }
+
             return new ImportResultResponse(rows.size(), rows.size(), 0, List.of());
+
         } catch (IOException e) {
             throw new BadRequestException("Không đọc được file Excel");
         }
+    }
+
+    private UserProfile profileEntity(UserImportRow row) {
+        return UserProfile.builder()
+                .street(row.street())
+                .ward(row.ward())
+                .district(row.district())
+                .province(row.province())
+                .yearsOfExperience(row.yearsOfExperience())
+                .build();
     }
 
     void checkHeader(Row h) {
@@ -119,22 +176,22 @@ public class UserImportUseCase {
 
     void dupDb(List<UserImportRow> rows, List<ImportErrorItem> e) {
         Set<String> us = rows.stream().map(UserImportRow::username).filter(Objects::nonNull).collect(Collectors.toSet());
-        Set<String> ex = userRepository.findByUsernameInAndStatusNot(us, UserStatus.DELETED).stream().map(UserEntity::getUsername).collect(Collectors.toSet());
+        Set<String> ex = userRepository.findByUsernameIn(us).stream().map(User::getUsername).collect(Collectors.toSet());
         rows.stream().filter(r -> ex.contains(r.username())).forEach(r -> e.add(new ImportErrorItem(r.excelRowIndex(), "username", r.username(), "Username đã tồn tại")));
     }
 
-    UserEntity entity(UserImportRow r) {
-        UserEntity e = new UserEntity();
+    User entity(UserImportRow r) {
+        UserProfile profile = new UserProfile();
+        profile.setWard(r.ward());
+        profile.setDistrict(r.district());
+        profile.setProvince(r.province());
+        profile.setStreet(r.street());
+        profile.setYearsOfExperience(r.yearsOfExperience());
+
+        User e = new User();
         e.setUsername(r.username());
-        e.setFullName(r.fullName());
+        e.setFirstName(r.fullName());
         e.setDateOfBirth(r.dateOfBirth());
-        e.setStreet(r.street());
-        e.setWard(r.ward());
-        e.setDistrict(r.district());
-        e.setProvince(r.province());
-        e.setYearsOfExperience(r.yearsOfExperience());
-        e.setStatus(UserStatus.ACTIVE);
-        e.setCreatedAt(Instant.now());
         return e;
     }
 

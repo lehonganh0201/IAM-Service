@@ -1,5 +1,6 @@
 package com.example.iamservice.config;
 
+import com.example.iamservice.client.StorageClientProperties;
 import com.example.iamservice.config.properties.AppProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

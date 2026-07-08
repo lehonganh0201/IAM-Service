@@ -1,7 +1,8 @@
-package com.example.userservice.infrastructure.client;
+package com.example.iamservice.client;
 
 import com.example.commonlib.exception.BadRequestException;
-import com.example.userservice.application.dto.response.FileUploadResponse;
+import com.example.iamservice.config.properties.AppProperties;
+import com.example.iamservice.domain.dto.response.FileUploadResponse;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.UUID;
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    06/07/2026 at 16:06
+ * Created on:    08/07/2026 at 13:22
  * Project:       iam-platform
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
@@ -28,29 +29,57 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class WebClientStorageClientAdapter implements StorageClientAdapter {
-    private final WebClient webClient;
-    private final ServiceTokenProvider tokenProvider;
-    private final StorageClientProperties storageClientProperties;
+
+    private final WebClient storageWebClient;
+    private final AppProperties appProperties;
 
     @Retry(name = "storageService")
     @CircuitBreaker(name = "storageService", fallbackMethod = "fallback")
     public FileUploadResponse uploadAvatar(MultipartFile file) {
         try {
+            var storage = appProperties.getStorageClient();
+
             var body = new LinkedMultiValueMap<String, Object>();
+
             body.add("file", new ByteArrayResource(file.getBytes()) {
+                @Override
                 public String getFilename() {
                     return file.getOriginalFilename();
                 }
             });
+
             body.add("description", "User avatar uploaded by IAM Service");
-            String path = "PRIVATE".equalsIgnoreCase(storageClientProperties.avatarVisibility()) ? "/api/v1/private/files" : "/api/v1/public/files";
-            Map<?, ?> res = webClient.post().uri(path).headers(h -> h.setBearerAuth(tokenProvider.getToken())).contentType(MediaType.MULTIPART_FORM_DATA).body(BodyInserters.fromMultipartData(body)).retrieve().bodyToMono(Map.class).block();
+
+            String path = "PRIVATE".equalsIgnoreCase(storage.getAvatarVisibility())
+                    ? "/api/v1/private/files"
+                    : "/api/v1/public/files";
+
+            Map<?, ?> res = storageWebClient.post()
+                    .uri(path)
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(body))
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
             Map<?, ?> data = res == null ? null : (Map<?, ?>) res.get("data");
-            if (data == null)
+
+            if (data == null) {
                 throw new BadRequestException("Invalid Storage response");
-            return new FileUploadResponse(UUID.fromString(String.valueOf(data.get("id"))), String.valueOf(data.get("originalName")), String.valueOf(data.get("contentType")), data.get("fileSize") instanceof Number n ? n.longValue() : null);
+            }
+
+            return new FileUploadResponse(
+                    UUID.fromString(String.valueOf(data.get("id"))),
+                    String.valueOf(data.get("originalName")),
+                    String.valueOf(data.get("contentType")),
+                    data.get("fileSize") instanceof Number n ? n.longValue() : null
+            );
+
         } catch (Exception e) {
-            if (e instanceof BadRequestException b) throw b;
+            if (e instanceof BadRequestException b) {
+                throw b;
+            }
+
             throw new BadRequestException("Cannot upload avatar");
         }
     }
@@ -60,6 +89,16 @@ public class WebClientStorageClientAdapter implements StorageClientAdapter {
     }
 
     public void deleteFile(String id) {
-        webClient.delete().uri("/api/v1/public/files/{id}", id).headers(h -> h.setBearerAuth(tokenProvider.getToken())).retrieve().toBodilessEntity().block();
+        var storage = appProperties.getStorageClient();
+
+        String path = "PRIVATE".equalsIgnoreCase(storage.getAvatarVisibility())
+                ? "/api/v1/private/files/{id}"
+                : "/api/v1/public/files/{id}";
+
+        storageWebClient.delete()
+                .uri(path, id)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
     }
 }

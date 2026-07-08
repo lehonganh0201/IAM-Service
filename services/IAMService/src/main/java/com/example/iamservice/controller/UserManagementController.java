@@ -8,15 +8,20 @@ import com.example.iamservice.aop.annotation.AuditActivity;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.domain.dto.request.*;
+import com.example.iamservice.domain.dto.response.ImportResultResponse;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.service.UserManagementService;
+import com.example.iamservice.service.exporter.ExportService;
+import com.example.iamservice.service.importer.ImportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Set;
 
@@ -45,10 +50,12 @@ public class UserManagementController {
     );
 
     private final UserManagementService userManagementService;
+    private final ImportService importService;
+    private final ExportService exportService;
     private final ApiResponseFactory responseFactory;
     private final PageableFactory pageableFactory;
 
-    @PreAuthorize("hasPermission(null, 'USER_READ')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getUsers(
             @RequestParam(required = false) String keyword,
@@ -73,7 +80,7 @@ public class UserManagementController {
         );
     }
 
-    @PreAuthorize("hasPermission(null, 'USER_READ')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long id) {
         UserResponse data = userManagementService.getUserById(id);
@@ -88,7 +95,7 @@ public class UserManagementController {
             resourceType = AuditResourceType.USER,
             message = "Create user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_CREATE')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PostMapping
     public ResponseEntity<ApiResponse<UserResponse>> createUser(
             @Valid @RequestBody CreateUserRequest request
@@ -106,7 +113,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Update user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_UPDATE')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
             @PathVariable Long id,
@@ -125,7 +132,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Lock user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_LOCK')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PatchMapping("/{id}/lock")
     public ResponseEntity<ApiResponse<UserResponse>> lockUser(@PathVariable Long id) {
         UserResponse data = userManagementService.lockUser(id);
@@ -141,7 +148,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Unlock user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_UNLOCK')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PatchMapping("/{id}/unlock")
     public ResponseEntity<ApiResponse<UserResponse>> unlockUser(@PathVariable Long id) {
         UserResponse data = userManagementService.unlockUser(id);
@@ -157,7 +164,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Assign roles to user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_ASSIGN_ROLE')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PatchMapping("/{id}/roles")
     public ResponseEntity<ApiResponse<UserResponse>> assignRoles(
             @PathVariable Long id,
@@ -176,7 +183,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Reset user password"
     )
-    @PreAuthorize("hasPermission(null, 'USER_RESET_PASSWORD')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @PathVariable Long id,
@@ -195,7 +202,7 @@ public class UserManagementController {
             resourceIdParam = "id",
             message = "Delete user"
     )
-    @PreAuthorize("hasPermission(null, 'USER_DELETE')")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @PathVariable Long id,
@@ -207,6 +214,62 @@ public class UserManagementController {
 
         return ResponseEntity.ok(
                 responseFactory.success("Delete user successfully")
+        );
+    }
+
+    @GetMapping("/import/template")
+    @PreAuthorize("hasAnyAuthority('iam:user:import','ROLE_admin')")
+    public ResponseEntity<Resource> template() {
+        byte[] b = importService.template();
+        return ResponseEntity.ok().contentType(
+                        MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename("user-import-template.xlsx")
+                                .build().toString()).contentLength(b.length).body(new ByteArrayResource(b));
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('iam:user:import','ROLE_admin')")
+    public ResponseEntity<ApiResponse<ImportResultResponse>> importUsers(@RequestPart MultipartFile file,
+                                                                         @RequestParam(defaultValue = "true") boolean dryRun) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Import processed",
+                        importService.importUsers(file, dryRun))
+        );
+    }
+
+    @GetMapping("/export")
+    @PreAuthorize("hasAnyAuthority('iam:user:export','ROLE_admin')")
+    public ResponseEntity<Resource> export(@RequestParam(defaultValue = "xlsx") String format, @RequestParam(required = false) String keyword, @RequestParam(required = false) String province, @RequestParam(required = false) Double minYears, @RequestParam(required = false) Double maxYears) {
+        var f = exportService.export(format, new UserSearchQuery(keyword, province, minYears, maxYears));
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(f.contentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(f.filename()).build().toString()).contentLength(f.bytes().length)
+                .body(new ByteArrayResource(f.bytes()));
+    }
+
+    @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
+    public ResponseEntity<ApiResponse<UserResponse>> uploadAvatar(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Avatar uploaded", userManagementService.uploadAvatar(id, file)
+                )
+        );
+    }
+
+    @DeleteMapping("/{id}/avatar")
+    @PreAuthorize("hasAnyAuthority('iam:user:manage','ROLE_admin')")
+    public ResponseEntity<ApiResponse<UserResponse>> deleteAvatar(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                responseFactory.success(
+                        "Avatar deleted",
+                        userManagementService.deleteAvatar(id))
         );
     }
 }

@@ -290,7 +290,6 @@ public class UserServiceImpl implements UserService {
                 .dateOfBirth(user.getDateOfBirth())
                 .phoneNumber(user.getPhoneNumber())
                 .email(user.getEmail())
-                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 
@@ -306,7 +305,7 @@ public class UserServiceImpl implements UserService {
     private void uploadAvatarIfPresent(User user, MultipartFile avatar) {
         if (avatar != null && !avatar.isEmpty()) {
             String avatarUrl = cloudinaryUtil.uploadFile(avatar);
-            user.setAvatarUrl(avatarUrl);
+//            user.setAvatarUrl(avatarUrl);
         }
     }
 
@@ -390,7 +389,7 @@ public class UserServiceImpl implements UserService {
                 .email(savedUser.getEmail())
                 .phoneNumber(savedUser.getPhoneNumber())
                 .dateOfBirth(savedUser.getDateOfBirth())
-                .avatarUrl(savedUser.getAvatarUrl())
+//                .avatarUrl(savedUser.getAvatarUrl())
                 .username(savedUser.getUsername())
                 .userId(savedUser.getId())
                 .userKeycloakId(savedUser.getKeycloakUserId())

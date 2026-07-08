@@ -1,16 +1,15 @@
-package com.example.userservice.application.dto.response;
+package com.example.iamservice.domain.dto.response;
 
-import java.util.List;
+import java.util.UUID;
 
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    06/07/2026 at 16:47
+ * Created on:    08/07/2026 at 13:19
  * Project:       iam-platform
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
  */
 
-public record ImportResultResponse(int totalRows, int validRows, int errorRows, List<ImportErrorItem> errors) {
+public record FileUploadResponse(UUID id, String originalName, String contentType, Long fileSize) {
 }
-
