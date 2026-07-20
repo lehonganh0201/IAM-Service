@@ -1,7 +1,6 @@
 package com.example.iamservice.domain.dto.request;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -42,21 +41,6 @@ public class CreateUserRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     private String password;
-
-    @Size(max = 255)
-    private String street;
-
-    @Size(max = 255)
-    private String ward;
-
-    @Size(max = 255)
-    private String district;
-
-    @Size(max = 255)
-    private String province;
-
-    @Min(0)
-    private Double yearsOfExperience;
 
     private Set<String> roleCodes;
 }

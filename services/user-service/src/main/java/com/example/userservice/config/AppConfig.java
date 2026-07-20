@@ -1,19 +1,19 @@
-package com.example.iamservice.config;
+package com.example.userservice.config;
 
-import com.example.iamservice.config.properties.AppProperties;
+import com.example.userservice.infrastructure.client.StorageClientProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    17/06/2026 at 9:41
- * Project:       IAMService
+ * Created on:    06/07/2026 at 16:12
+ * Project:       iam-platform
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
  */
 
 @Configuration
-@EnableConfigurationProperties(AppProperties.class)
-public class WebConfig {
+@EnableConfigurationProperties(StorageClientProperties.class)
+public class AppConfig {
 }

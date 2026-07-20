@@ -9,6 +9,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="IAMService" />
         <module name="storage-service" />
+        <module name="user-service" />
       </profile>
       <profile name="Annotation profile for common-lib" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -21,7 +22,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="user-service" target="17" />
+      <module name="services" target="1.5" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

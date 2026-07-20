@@ -9,7 +9,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * ----------------------------------------------------------------------------
@@ -32,7 +33,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     boolean existsByUsernameAndDeletedFalse(String username);
 
-    Optional<User> findByIdAndDeletedFalse(Long id);
-
-    Collection<User> findByUsernameIn(Set<String> us);
+    @EntityGraph(attributePaths = {"roles"})
+    Optional<User> findWithRolesByIdAndDeletedFalse(Long id);
 }
