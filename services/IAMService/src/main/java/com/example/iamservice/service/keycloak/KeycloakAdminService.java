@@ -50,7 +50,7 @@ public class KeycloakAdminService {
 
             String userId = extractUserIdFromLocation(response.getLocation());
 
-//            sendVerificationEmailAsync(userId);
+            sendVerificationEmailAsync(userId);
 
             return new KeycloakUserProvisioningResult(userId, request.username(), request.email());
         }

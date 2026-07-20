@@ -1,31 +1,15 @@
-create table user_profiles
-(
-    id                    bigserial primary key,
-    street                varchar(255),
-    ward                  varchar(100),
-    district              varchar(100),
-    province              varchar(100),
-    years_of_experience   double precision,
-    avatar_file_id        uuid,
-    created_at            timestamp not null,
-    updated_at            timestamp not null,
-    created_by            bigint,
-    last_modified_by      bigint
-);
-
 create table users
 (
     id               bigserial primary key,
     keycloak_user_id varchar(100),
     username         varchar(100) not null,
-    email            varchar(255),
+    email            varchar(255) not null,
     first_name       varchar(100),
     last_name        varchar(100),
     password_hash    varchar(255),
     phone_number     varchar(30),
     date_of_birth    date,
     avatar_url       text,
-    profile_id       bigint,
     email_verified   boolean      not null default false,
     enabled          boolean      not null default true,
     locked           boolean      not null default false,
@@ -33,16 +17,8 @@ create table users
     created_at       timestamp    not null,
     updated_at       timestamp    not null,
     created_by       bigint,
-    last_modified_by bigint,
-
-    constraint fk_users_profile
-        foreign key (profile_id)
-            references user_profiles (id)
+    last_modified_by bigint
 );
-
-create unique index uk_users_profile_id
-    on users (profile_id)
-    where profile_id is not null;
 
 create unique index uk_users_username_active
     on users (username) where deleted = false;

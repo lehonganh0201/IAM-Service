@@ -1,11 +1,11 @@
-package com.example.iamservice.domain.dto.importer;
+package com.example.userservice.application.importer;
 
 import java.time.LocalDate;
 
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    08/07/2026 at 11:32
+ * Created on:    06/07/2026 at 16:52
  * Project:       iam-platform
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------

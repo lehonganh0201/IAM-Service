@@ -3,7 +3,6 @@ package com.example.iamservice.service.impl;
 import com.example.commonlib.api.common.PageResponse;
 import com.example.commonlib.exception.ConflictException;
 import com.example.commonlib.exception.NotFoundException;
-import com.example.iamservice.client.StorageClientAdapter;
 import com.example.iamservice.config.properties.AppProperties;
 import com.example.iamservice.config.properties.IdentityProviderType;
 import com.example.iamservice.domain.dto.request.*;
@@ -11,11 +10,9 @@ import com.example.iamservice.domain.dto.response.KeycloakUserProvisioningResult
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
-import com.example.iamservice.domain.entity.UserProfile;
 import com.example.iamservice.domain.entity.UserRole;
 import com.example.iamservice.domain.mapper.UserMapper;
 import com.example.iamservice.repository.RoleRepository;
-import com.example.iamservice.repository.UserProfileRepository;
 import com.example.iamservice.repository.UserRepository;
 import com.example.iamservice.repository.UserRoleRepository;
 import com.example.iamservice.repository.specification.UserSpecification;
@@ -30,13 +27,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -59,8 +53,6 @@ public class UserManagementServiceImpl implements UserManagementService {
     private final UserMapper userMapper;
     private final SoftDeleteService softDeleteService;
     private final UserRoleRepository userRoleRepository;
-    private final UserProfileRepository userProfileRepository;
-    private final StorageClientAdapter storageAdapter;
 
     @Override
     @Transactional(readOnly = true)
@@ -230,49 +222,8 @@ public class UserManagementServiceImpl implements UserManagementService {
         userRepository.save(user);
     }
 
-    @Override
-    @Transactional
-    public UserResponse uploadAvatar(Long id, MultipartFile file) {
-        User user = getActiveUser(id);
-
-        UserProfile profile = userProfileRepository.findById(user.getProfileId())
-                .orElseThrow(() -> new NotFoundException("User profile not found"));
-
-        var fileUpload = storageAdapter.uploadAvatar(file);
-        profile.setAvatarFileId(fileUpload.id());
-        userProfileRepository.save(profile);
-
-        return userMapper.toResponse(user);
-    }
-
-    @Override
-    @Transactional
-    public UserResponse deleteAvatar(Long id) {
-        var u = getActiveUser(id);
-
-        var profile = userProfileRepository.findById(u.getProfileId())
-                .orElseThrow(() -> new NotFoundException("User profile not found"));
-
-        if (profile.getAvatarFileId() != null) storageAdapter.deleteFile(profile.getAvatarFileId().toString());
-
-        profile.setAvatarFileId(null);
-        userProfileRepository.save(profile);
-
-        return userMapper.toResponse(u);
-    }
-
     private UserResponse createUserWithSelfIdp(CreateUserRequest request) {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-
-        UserProfile profile = UserProfile.builder()
-                .street(request.getStreet())
-                .ward(request.getWard())
-                .district(request.getDistrict())
-                .province(request.getProvince())
-                .yearsOfExperience(request.getYearsOfExperience())
-                .build();
-
-        profile = userProfileRepository.save(profile);
 
         User user = User.builder()
                 .username(request.getUsername())
@@ -282,7 +233,6 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .phoneNumber(request.getPhoneNumber())
                 .dateOfBirth(request.getDateOfBirth())
                 .passwordHash(encodedPassword)
-                .profileId(profile.getId())
                 .enabled(true)
                 .locked(false)
                 .build();
@@ -304,16 +254,6 @@ public class UserManagementServiceImpl implements UserManagementService {
                     )
             );
 
-            UserProfile profile = UserProfile.builder()
-                    .street(request.getStreet())
-                    .ward(request.getWard())
-                    .district(request.getDistrict())
-                    .province(request.getProvince())
-                    .yearsOfExperience(request.getYearsOfExperience())
-                    .build();
-
-            profile = userProfileRepository.save(profile);
-
             User user = User.builder()
                     .keycloakUserId(provisionedUser.keycloakUserId())
                     .username(request.getUsername())
@@ -322,7 +262,6 @@ public class UserManagementServiceImpl implements UserManagementService {
                     .lastName(request.getLastName())
                     .phoneNumber(request.getPhoneNumber())
                     .dateOfBirth(request.getDateOfBirth())
-                    .profileId(profile.getId())
                     .passwordHash(null)
                     .enabled(true)
                     .locked(false)
@@ -377,7 +316,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     private User getActiveUser(Long id) {
-        return userRepository.findByIdAndDeletedFalse(id)
+        return userRepository.findWithRolesByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 

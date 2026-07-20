@@ -26,14 +26,13 @@ public class UserResponse {
     private String username;
     private String email;
     private String fullName;
+    private String avatarUrl;
     private String phoneNumber;
     private LocalDate dateOfBirth;
     private Boolean isActive;
     private Boolean enabled;
     private Boolean locked;
     private Boolean deleted;
-
-    private UserProfileResponse profile;
     private Set<RoleSummaryResponse> roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -82,10 +82,6 @@ app:
 
   domain-url: ${APP_DOMAIN_URL:http://localhost:${SERVER_PORT:8083}}
 
-  storage-client:
-    base-url: ${STORAGE_SERVICE_URL:http://localhost:8082}
-    avatar-visibility: ${AVATAR_VISIBILITY:PUBLIC}
-
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:-no-request}] [%thread] %logger{36} - %msg%n"

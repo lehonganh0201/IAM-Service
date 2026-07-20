@@ -1,18 +1,17 @@
-package com.example.iamservice.service.exporter;
+package com.example.userservice.application.exporter;
 
-import com.example.iamservice.domain.entity.User;
+import com.example.userservice.infrastructure.persistence.UserEntity;
 
 import java.util.List;
 
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    08/07/2026 at 11:59
+ * Created on:    06/07/2026 at 17:06
  * Project:       iam-platform
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
  */
-
 
 public interface UserExportStrategy {
     String format();
@@ -21,5 +20,5 @@ public interface UserExportStrategy {
 
     String filename();
 
-    byte[] export(List<User> users);
+    byte[] export(List<UserEntity> users);
 }

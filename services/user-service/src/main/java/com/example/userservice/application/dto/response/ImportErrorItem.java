@@ -1,13 +1,13 @@
-package com.example.iamservice.domain.dto.request;
+package com.example.userservice.application.dto.response;
 
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    08/07/2026 at 12:01
+ * Created on:    06/07/2026 at 16:48
  * Project:       iam-platform
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
  */
 
-public record UserSearchQuery(String keyword, String province, Double minYears, Double maxYears) {
+public record ImportErrorItem(int rowIndex, String field, Object value, String message) {
 }
