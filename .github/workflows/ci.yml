@@ -1,0 +1,32 @@
+name: Parallel and Sequential Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  job_info_1:
+    runs-on: [self-hosted]
+    steps:
+      - name: Thu thập thông tin OS
+        run: |
+          echo "Bắt đầu thu thập thông tin hệ thống..."
+          uname -a
+
+  job_info_2:
+    runs-on: [self-hosted]
+    steps:
+      - name: Thu thập thông tin User
+        run: |
+          echo "Bắt đầu kiểm tra tài khoản người dùng..."
+          whoami
+
+  job_print:
+    needs: [job_info_1, job_info_2] # Khai báo phụ thuộc
+    runs-on: [self-hosted]
+    steps:
+      - name: In kết quả
+        run: |
+          echo "In ra kết quả cuối cùng từ workflow..."
+          echo "Chỉ chạy sau khi job_info_1 và job_info_2 hoàn thành thành công."
