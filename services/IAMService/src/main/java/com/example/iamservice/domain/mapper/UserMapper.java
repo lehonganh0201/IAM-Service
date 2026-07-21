@@ -1,10 +1,13 @@
 package com.example.iamservice.domain.mapper;
 
 import com.example.iamservice.domain.dto.response.RoleSummaryResponse;
+import com.example.iamservice.domain.dto.response.UserProfileResponse;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import com.example.iamservice.domain.entity.Role;
 import com.example.iamservice.domain.entity.User;
+import com.example.iamservice.domain.entity.UserProfile;
 import com.example.iamservice.repository.RoleRepository;
+import com.example.iamservice.repository.UserProfileRepository;
 import com.example.iamservice.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,7 @@ public class UserMapper {
 
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
+    private final UserProfileRepository profileRepository;
 
     public UserResponse toResponse(User user) {
 
@@ -40,19 +44,26 @@ public class UserMapper {
                         .map(this::toRoleSummary)
                         .collect(Collectors.toSet());
 
+        UserProfileResponse profileResponse = null;
+
+        if (user.getProfileId() != null) {
+            UserProfile profile = profileRepository.findById(user.getProfileId()).orElse(null);
+            profileResponse = profile != null ? toProfileResponse(profile) : null;
+        }
+
         return new UserResponse(
                 user.getId(),
                 user.getKeycloakUserId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getDisplayName(),
-                user.getAvatarUrl(),
                 user.getPhoneNumber(),
                 user.getDateOfBirth(),
                 user.isActive(),
                 user.getEnabled(),
                 user.getLocked(),
                 user.getDeleted(),
+                profileResponse,
                 roles,
                 user.getCreatedAt(),
                 user.getUpdatedAt()
@@ -64,6 +75,17 @@ public class UserMapper {
                 role.getId(),
                 role.getCode(),
                 role.getName()
+        );
+    }
+
+    private UserProfileResponse toProfileResponse(UserProfile profile) {
+        return new UserProfileResponse(
+                profile.getStreet(),
+                profile.getWard(),
+                profile.getDistrict(),
+                profile.getProvince(),
+                profile.getYearsOfExperience(),
+                profile.getAvatarFileId()
         );
     }
 }

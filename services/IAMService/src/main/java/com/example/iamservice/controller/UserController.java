@@ -1,8 +1,8 @@
 package com.example.iamservice.controller;
 
-import com.example.commonlib.api.RestApiV1;
+import com.example.commonlib.annotation.RestApiV1;
 import com.example.commonlib.api.RestData;
-import com.example.commonlib.api.VsResponseUtil;
+import com.example.commonlib.factory.VsResponseUtil;
 import com.example.iamservice.domain.dto.request.UpdateUserPasswordRequest;
 import com.example.iamservice.domain.dto.request.UpdateUserRequest;
 import com.example.iamservice.domain.dto.request.UserRequest;

@@ -1,7 +1,7 @@
 package com.example.commonlib.exception;
 
 import com.example.commonlib.api.RestData;
-import com.example.commonlib.api.VsResponseUtil;
+import com.example.commonlib.factory.VsResponseUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;

@@ -1,12 +1,13 @@
 package com.example.iamservice.service;
 
-import com.example.commonlib.api.common.PageResponse;
+import com.example.commonlib.api.PageResponse;
 import com.example.iamservice.domain.dto.request.AssignUserRolesRequest;
 import com.example.iamservice.domain.dto.request.CreateUserRequest;
 import com.example.iamservice.domain.dto.request.ResetUserPasswordRequest;
 import com.example.iamservice.domain.dto.request.UpdateUserRequest;
 import com.example.iamservice.domain.dto.response.UserResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * ----------------------------------------------------------------------------
@@ -36,4 +37,8 @@ public interface UserManagementService {
     void resetPassword(Long id, ResetUserPasswordRequest request);
 
     void deleteUser(Long id, String reason);
+
+    UserResponse uploadAvatar(Long id, MultipartFile file);
+
+    UserResponse deleteAvatar(Long id);
 }

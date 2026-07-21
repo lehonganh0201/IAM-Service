@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * ----------------------------------------------------------------------------
@@ -27,10 +28,8 @@ public class User extends SoftDeleteAuditing {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String firstName;
 
-    @Column(nullable = false)
     private String lastName;
 
     private String keycloakUserId;
@@ -51,6 +50,8 @@ public class User extends SoftDeleteAuditing {
     private LocalDate dateOfBirth;
 
     private String avatarUrl;
+
+    private Long profileId;
 
     public boolean isActive() {
         return Boolean.TRUE.equals(enabled)

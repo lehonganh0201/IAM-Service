@@ -1,7 +1,7 @@
 package com.example.iamservice.security.jwt;
 
-import com.example.commonlib.api.common.ApiError;
-import com.example.commonlib.api.common.ApiResponse;
+import com.example.commonlib.api.ApiError;
+import com.example.commonlib.api.ApiResponse;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.constant.AuditResult;
