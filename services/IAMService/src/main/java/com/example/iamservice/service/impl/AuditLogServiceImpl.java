@@ -1,6 +1,6 @@
 package com.example.iamservice.service.impl;
 
-import com.example.commonlib.api.common.PageResponse;
+import com.example.commonlib.api.PageResponse;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;
 import com.example.iamservice.constant.AuditResult;

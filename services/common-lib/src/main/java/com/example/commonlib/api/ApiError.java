@@ -1,4 +1,4 @@
-package com.example.commonlib.api.common;
+package com.example.commonlib.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

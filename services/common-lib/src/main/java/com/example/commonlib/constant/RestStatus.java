@@ -1,16 +1,14 @@
-package com.example.commonlib.api.common;
+package com.example.commonlib.constant;
 
 /**
  * ----------------------------------------------------------------------------
  * Author:        Hong Anh
- * Created on:    17/06/2026 at 16:03
+ * Created on:    09/06/2026 at 9:55
  * Project:       IAMService
  * Contact:       https://github.com/lehonganh0201
  * ----------------------------------------------------------------------------
  */
 
-public record FieldErrorResponse(
-        String field,
-        String message
-) {
+public enum RestStatus {
+    SUCCESS, ERROR
 }

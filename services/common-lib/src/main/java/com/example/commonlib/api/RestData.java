@@ -1,5 +1,6 @@
 package com.example.commonlib.api;
 
+import com.example.commonlib.constant.RestStatus;
 import lombok.*;
 
 /**

@@ -1,10 +1,9 @@
 package com.example.storageservice.interfaces.rest;
 
-import com.example.commonlib.api.RestApiV1;
-import com.example.commonlib.api.common.ApiResponse;
-import com.example.commonlib.api.common.ApiResponseFactory;
-import com.example.commonlib.api.common.PageResponse;
-import com.example.commonlib.api.common.PageableFactory;
+import com.example.commonlib.annotation.RestApiV1;
+import com.example.commonlib.api.ApiResponse;
+import com.example.commonlib.factory.ApiResponseFactory;
+import com.example.commonlib.api.PageResponse;
 import com.example.commonlib.security.SecurityUtils;
 import com.example.storageservice.application.dto.request.FileSearchQuery;
 import com.example.storageservice.application.dto.request.FileUpdateRequest;

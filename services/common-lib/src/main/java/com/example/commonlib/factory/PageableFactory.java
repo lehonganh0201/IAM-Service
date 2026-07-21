@@ -1,4 +1,4 @@
-package com.example.commonlib.api.common;
+package com.example.commonlib.factory;
 
 import com.example.commonlib.exception.BadRequestException;
 import org.springframework.data.domain.PageRequest;

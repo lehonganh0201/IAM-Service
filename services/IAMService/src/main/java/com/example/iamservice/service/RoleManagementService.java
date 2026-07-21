@@ -1,6 +1,6 @@
 package com.example.iamservice.service;
 
-import com.example.commonlib.api.common.PageResponse;
+import com.example.commonlib.api.PageResponse;
 import com.example.iamservice.domain.dto.request.AssignRolePermissionsRequest;
 import com.example.iamservice.domain.dto.request.CreateRoleRequest;
 import com.example.iamservice.domain.dto.request.UpdateRoleRequest;

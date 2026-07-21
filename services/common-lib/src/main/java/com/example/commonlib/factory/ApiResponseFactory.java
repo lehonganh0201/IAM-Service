@@ -1,5 +1,7 @@
-package com.example.commonlib.api.common;
+package com.example.commonlib.factory;
 
+import com.example.commonlib.api.ApiError;
+import com.example.commonlib.api.ApiResponse;
 import com.example.commonlib.web.context.RequestContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

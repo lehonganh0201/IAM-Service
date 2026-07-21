@@ -1,4 +1,4 @@
-package com.example.commonlib.api.common;
+package com.example.commonlib.api;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;

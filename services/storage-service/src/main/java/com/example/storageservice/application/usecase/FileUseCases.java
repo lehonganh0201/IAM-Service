@@ -1,6 +1,6 @@
 package com.example.storageservice.application.usecase;
 
-import com.example.commonlib.api.common.PageResponse;
+import com.example.commonlib.api.PageResponse;
 import com.example.commonlib.exception.BadRequestException;
 import com.example.commonlib.exception.ForbiddenException;
 import com.example.commonlib.exception.NotFoundException;

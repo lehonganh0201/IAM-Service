@@ -1,4 +1,4 @@
-package com.example.commonlib.api;
+package com.example.commonlib.annotation;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

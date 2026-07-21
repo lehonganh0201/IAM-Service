@@ -1,9 +1,9 @@
 package com.example.iamservice.controller;
 
-import com.example.commonlib.api.common.ApiResponse;
-import com.example.commonlib.api.common.ApiResponseFactory;
-import com.example.commonlib.api.common.PageResponse;
-import com.example.commonlib.api.common.PageableFactory;
+import com.example.commonlib.api.ApiResponse;
+import com.example.commonlib.factory.ApiResponseFactory;
+import com.example.commonlib.api.PageResponse;
+import com.example.commonlib.factory.PageableFactory;
 import com.example.iamservice.aop.annotation.AuditActivity;
 import com.example.iamservice.constant.AuditAction;
 import com.example.iamservice.constant.AuditResourceType;

@@ -1,5 +1,7 @@
-package com.example.commonlib.api;
+package com.example.commonlib.factory;
 
+import com.example.commonlib.api.RestData;
+import com.example.commonlib.constant.RestStatus;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
